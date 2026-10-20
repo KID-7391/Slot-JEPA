@@ -1,0 +1,75 @@
+defaults:
+  - plan_Maze
+  - _self_
+
+model_name: MazeR
+hydra:
+  run:
+    dir: plan_outputs/MazeR/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: plan_outputs/MazeR/${now:%Y%m%d_%H%M%S}
+    subdir: ${hydra.job.num}
+goal_file_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/MazeR/targets/test.pkl
+test_trajectory_budget_multiplier: 2.0
+test_trajectory_budget_round_to: 25
+test_context_num: 5
+
+n_evals: 50
+# eval_case_indices: [16,19,22,0]
+
+planner:
+  max_env_steps: 50
+  normalized_action_clip: 2.0
+  predictive_replan_within_block: false
+  sub_planner:
+    target: planning.cem.CEMPlanner
+    horizon: 5
+    # Optimize five coherent knots, then interpolate them over the same
+    # 5 model steps x 5 primitive actions. Sampling all 25 actions independently
+    # behaves like a short random walk and collapses CEM onto one U-maze arm.
+    num_action_knots: 5
+    topk: 10
+    num_samples: 100
+    # Keep 100 samples and five knots, but make accelerations stronger and
+    # directionally persistent enough to explore beyond the starting U arm.
+    var_scale: 2.0
+    action_temporal_correlation: 0.6
+    opt_steps: 10
+    eval_every: 10
+
+objective:
+  alpha: 0.0
+  # Keep these equal to Wall while evaluating the same obstacle-aware UOT in
+  # PointMaze. Tune per environment only after the initial comparison.
+  obstacle_transport:
+    enabled: true
+    # For each probe frame, first subtract the initial mask at aligned spatial
+    # positions, then average that frame's ten largest absolute differences.
+    # Average those per-frame scores across all probes.
+    motion_score_mode: per_frame_difference_topk
+    motion_topk_patches: 10
+    # Recompute global scores and any explicit static-slot override after
+    # native-grid retraining. Null uses deterministic online probing meanwhile.
+    fixed_slot_change_scores: null
+    static_slot_indices: null
+    moving_requires_both_scores: false
+    all_non_moving_static: false
+    moving_topk: 0
+    static_bottomk: 0
+    num_probe_actions: 16
+    probe_action_std: 1.0
+    probe_seed: 1729
+    # Applied to the top-10 difference score. Moving slots still use the high
+    # threshold; the low threshold is a fallback without static_slot_indices.
+    static_change_threshold: 0.05
+    moving_change_threshold: 0.15
+    local_change_fraction: 0.05
+    hardening_temperature: 1.0
+    # Compute the shortest path through a continuous obstacle-resistance field.
+    # No patch is thresholded into a hard wall.
+    cost_mode: geodesic
+    # Traversing mask value o scales local distance by (1 + weight * o).
+    penalty_weight: 20.0
+    # Start without dilation: one 16x16 patch is already large relative to the
+    # PointMaze ball and can close narrow passages. Increase only if needed.
+    obstacle_dilation: 0

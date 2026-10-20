@@ -1,0 +1,77 @@
+###########################################################################################################################################
+# !!! The structure of the file should be: 1st object: Main object for interaction, 2nd obj: target (if applicable), then distractors !!! #
+###########################################################################################################################################
+task:
+  type": "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "put"
+instruction: "put the banana in the box"
+
+instruction_obj_to_replace: "banana"
+instruction_target_to_replace: "box"
+instruction_verb_to_replace: "put"
+
+supported_scenes:
+  IMPACT:
+    - "default"
+
+camera_extrinsics:
+  cam1: "default"
+
+main_objects:
+    # -------------------- main objects --------------------
+    - type: "DatasetObject"
+      name: "banana"
+      category: "banana"
+      model: "vvyyyv"
+      position: [-0.05, -0.1, 0.771] #[-0.45, -0.1, 0.771]
+      orientation: [ -0.7071068, 0, 0, 0.7071068 ]
+      bounding_box: [ 0.15, 0.03, 0.09 ]
+
+target_objects:
+    - type: "DatasetObject"
+      name: "box"
+      category: "bowl"
+      model: "wtepsx"
+      position: [-0.045, 0.175, 0.775] #[-0.345, 0.175, 0.775]
+      orientation: [0, 0, 0.7071068, 0.7071068]
+      scale: [1.5, 2.5, 1]
+
+distractors:
+    - type: "DatasetObject"
+      name: "red_can"
+      category: "can_of_beans" #"canned_food"
+      model: "ojqgjz" #"ycbspm"
+      position: [ -0.15, 0.125, 0.83 ]
+      orientation: [ 0, 0, 0.3826834, 0.9238795 ]
+    - type: "DatasetObject"
+      name: "orange"
+      category: "orange"
+      model: "ucstpm"
+      position: [ 0.05, 0.175, 0.771 ]
+    - type: "PrimitiveObject"
+      name: "cube"
+      primitive_type: "Cube"
+      rgba: [ 0.1953125, 0.65625, 0.3203125, 1.0 ]
+      scale: [ 0.035, 0.035, 0.035 ]
+      position: [ 0.075, 0.15, 0.785 ]
+    - type: "DatasetObject"
+      name: "bowl"
+      category: "bowl"
+      model: "jpvcjv"
+      position: [0.15, -0.1, 0.771]
+
+immutables: []
+cached_semantic_perturbations:
+  "S-LANG":
+    - ""
+  "S-AFF":
+    - ""
+  "S-INT":
+    - ""
+  "S-PROP":
+    - ""
+  "S-MO":
+    - ""

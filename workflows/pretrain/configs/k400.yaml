@@ -1,0 +1,88 @@
+app: slot_jepa
+cpus_per_task: 8
+folder: workflows/pretrain/outputs/slot_jepa/run
+mem_per_gpu: 24G
+nodes: 1
+tasks_per_node: 8
+data:
+  batch_size: 2
+  crop_size: 384
+  dataset_root: data/Kinetics-400
+  dataset_fpcs:
+  - 7
+  valid_list: valid_video_names.txt
+  use_lmdb: true
+  lmdb_path: data/Kinetics-400/kinetics_train.lmdb
+  num_workers: 8
+  prefetch_factor: 2
+  pin_mem: true
+  persistent_workers: true
+data_aug:
+  auto_augment: false
+  horizontal_flip: false
+  motion_shift: false
+  random_resize_aspect_ratio:
+  - 0.75
+  - 1.35
+  random_resize_scale:
+  - 1.777
+  - 1.777
+  reprob: 0.0
+loss:
+  recon_loss_type: l1
+  recon_loss_weight: 0.1
+  transport_loss_weight: 3.0
+  mask_l1_loss_weight: 3.0
+  sinkhorn_iters: 5
+  sinkhorn_entropy_reg: 0.05
+  target_num_frames: 3
+meta:
+  dtype: bfloat16
+  resume_checkpoint: null
+  pretrain_checkpoint: null
+  student_pretrain_checkpoint: workflows/pretrain/checkpoints/vjepa2_1_vitb_dist_vitG_384.pt
+  teacher_pretrain_checkpoint: null
+  save_every_freq: 5
+model:
+  encoder_impl: slot_jepa
+  model_name: vit_base
+  encoder_checkpoint_key: ema_encoder
+  encoder_patch_size: 16
+  encoder_num_register_tokens: 0
+  student_encoder_impl: slot_jepa
+  student_model_name: vit_base
+  student_encoder_checkpoint_key: ema_encoder
+  student_encoder_patch_size: 16
+  student_encoder_num_register_tokens: 0
+  student_crop_size: 384
+  student_train_last_n_layers: 6
+  teacher_encoder_impl: dinov2_vitb14_reg
+  teacher_model_name: dinov2_vitb14_reg
+  teacher_encoder_checkpoint_key: null
+  teacher_encoder_patch_size: 14
+  teacher_encoder_num_register_tokens: 4
+  teacher_crop_size: 336
+  slot_feature_dim: 192
+  pred_depth: 12
+  pred_embed_dim: 192
+  pred_num_heads: 3
+  global_k: 16
+  L_max: 24
+  mask_temp: 0.05
+  window_size:
+  - 2
+  - 4
+  slots_per_window: 4
+  num_obj_tokens: 1
+  concat_mask_input: true
+  use_extrinsics: true
+  inverse_depth: 8
+  inverse_heads: 4
+  inverse_token_dim: 32
+  use_activation_checkpointing: false
+  use_decoder_checkpoint: false
+  correspondence_jitter_std: 0.05
+  correspondence_radius: 2
+optimization:
+  epochs: 10
+  lr: 0.0001

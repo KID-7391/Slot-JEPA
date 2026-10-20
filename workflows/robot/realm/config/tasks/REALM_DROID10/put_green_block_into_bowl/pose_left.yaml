@@ -1,0 +1,169 @@
+task:
+  type": DummyTask
+  termination_config: {}
+  reward_config: {}
+task_type: put
+instruction: put the dice in the bowl
+instruction_obj_to_replace: dice
+instruction_target_to_replace: bowl
+instruction_verb_to_replace: put
+task_object_mass:
+  enabled: true
+  main_object_min_mass: 0.25
+  main_object_max_mass: 2.0
+supported_scenes:
+  Pomaria_1_int:
+  - Table
+camera_extrinsics:
+  cam1: "ep_024104_cam1"
+  cam2: "ep_024104_cam2"
+reset_joint_pos:
+- 0.0055956
+- -0.46229482
+- -0.10837201
+- -2.22445
+- -0.02223617
+- 1.6368663
+- -0.28468588
+main_objects:
+- type: "DatasetObject"
+  name: "toy_dice"
+  category: "toy_dice"
+  model: "eqwazv"
+  bounding_box: [ 0.05, 0.05, 0.05 ]
+  relative_bbox_position: [0.11, 0.26, 0.03]
+target_objects:
+- type: DatasetObject
+  name: bowl
+  category: bowl
+  model: jpvcjv
+  bounding_box:
+  - 0.2
+  - 0.2
+  - 0.07
+  relative_bbox_position:
+  - 0.24
+  - 0.55
+  - 0.0
+distractors:
+- type: DatasetObject
+  name: corkscrew
+  category: corkscrew
+  model: gqocna
+  bounding_box:
+  - 0.02
+  - 0.09
+  - 0.11
+  relative_bbox_position:
+  - 0.325
+  - 0.075
+  - 0.03
+- type: DatasetObject
+  name: table_knife
+  category: table_knife
+  model: eebpap
+  bounding_box:
+  - 0.27
+  - 0.03
+  - 0.01
+  relative_bbox_position:
+  - 0.25
+  - 0.4
+  - 0
+  orientation:
+  - 0
+  - 0
+  - -0.3826834
+  - 0.9238795
+- type: DatasetObject
+  name: wineglass
+  category: wineglass
+  model: hxccge
+  bounding_box:
+  - 0.08
+  - 0.08
+  - 0.16
+  relative_bbox_position:
+  - 0.225
+  - 0.05
+  - 0.04
+- type: DatasetObject
+  name: water_glass
+  category: water_glass
+  model: lvqgvn
+  bounding_box:
+  - 0.06
+  - 0.06
+  - 0.15
+  relative_bbox_position:
+  - 0.65
+  - 0.48
+  - 0.04
+- type: DatasetObject
+  name: bottle_of_wine
+  category: bottle_of_wine
+  model: tisclo
+  bounding_box:
+  - 0.075
+  - 0.075
+  - 0.24
+  relative_bbox_position:
+  - 0.425
+  - 0.175
+  - 0.125
+cached_semantic_perturbations:
+  S-LANG:
+  - Place the dice inside the container.
+  - Transfer the dice into the bowl.
+  - Set the dotted cube down inside the receiving dish.
+  - Move the toy dice into the vessel.
+  - Deposit the dice into the bowl.
+  - Relocate the dice to the interior of the bowl.
+  - Drop the dice in the bowl.
+  - Insert the toy dice into the container.
+  - Shift the small dice to the bowl.
+  - The task is to position the dice within the bowl.
+  S-AFF:
+  - Put the dice in the bowl where you would keep small game pieces.
+  - Put the dice in the bowl, as if clearing a table.
+  - Toss the dice into the bowl like you would store board game pieces.
+  - Put the dice in the bowl for safekeeping.
+  - Deposit the dice in the bowl for later use.
+  - Put the dice in the bowl as you would a small toy.
+  - Move the dice into the bowl to organize the workspace.
+  - Place the dice in the bowl for storage.
+  - Set the dice in the bowl before starting a game.
+  - Put the dice in the bowl as if cleaning up a toy area.
+  S-INT:
+  - Put the small cube in the ceramic dish.
+  - Place the cube-shaped object in the hemispherical container.
+  - Put the dotted toy block in the bowl often used for food.
+  - Put the solid dice into the receiving vessel.
+  - Insert the cubic game piece into the common kitchen ware.
+  - Put the toy dice in the dish.
+  - Place the angular dotted item into the round container.
+  - Put the dice in the bowl used for holding food.
+  - Put the rigid cubic object in the rounded container.
+  - Move the dice into the bowl, typically made of glass or wood.
+  S-PROP:
+  - Place the small dotted dice inside the brown textured bowl.
+  - Pick up the dice and drop it into the large round bowl on the table.
+  - Move the cube-shaped toy dice into the woven-looking bowl.
+  - Put the small dotted cube into the deep bowl.
+  - Place the dice in the patterned bowl on the tabletop.
+  - Insert the toy dice into the bowl with a rough brown surface.
+  - Drop the small dice into the big brown bowl.
+  - Place the dice with visible dots into the ceramic bowl on the table.
+  - Move the dice into the bowl that’s closest to the edge of the table.
+  - Put the small cube-shaped game piece into the wide, shallow bowl.
+  S-MO:
+  - Place the dice into the item that’s next to the red cube.
+  - Put the dice into the item near the center of the table.
+  - Move the toy dice into the item that’s beside the bottle.
+  - Drop the dice into the item closest to the robot arm.
+  - Put the dice into the item that’s in front of the chairs.
+  - Place the dotted cube into the item positioned between the red cube and the bottle.
+  - Put the dice into the item on the right side of the table.
+  - Insert the toy dice into the item opposite the robot arm.
+  - Move the dice into the item that sits across from the small bottle.
+  - Drop the game piece into the item located near the table’s edge.

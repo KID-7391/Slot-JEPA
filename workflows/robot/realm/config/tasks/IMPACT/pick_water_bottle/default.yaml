@@ -1,0 +1,44 @@
+###########################################################################################################################################
+# !!! The structure of the file should be: 1st object: Main object for interaction, 2nd obj: target (if applicable), then distractors !!! #
+###########################################################################################################################################
+task:
+  type": "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "pick"
+instruction: "pick up the water bottle"
+instruction_obj_to_replace: "water bottle"
+instruction_target_to_replace: ""
+instruction_verb_to_replace: "pick up"
+
+supported_scenes:
+  IMPACT:
+    - "default"
+
+camera_extrinsics:
+  cam1: "default"
+
+main_objects:
+  - type: "DatasetObject"
+    name: "bottle_of_water"
+    category: "bottle_of_water"
+    model: "eeaimz"
+    bounding_box: [0.07, 0.07, 0.17]
+    position: [0.0, 0.0, 0.79]
+
+target_objects: []
+distractors: []
+immutables: []
+
+cached_semantic_perturbations:
+  "S-LANG":
+    - ""
+  "S-AFF":
+    - ""
+  "S-INT":
+    - ""
+  "S-PROP":
+    - ""
+  "S-MO":
+    - ""

@@ -1,0 +1,118 @@
+defaults:
+  - plan_PushT
+  - _self_
+
+model_name: PushObj
+use_geometric_center_eval: true
+hydra:
+  run:
+    dir: plan_outputs/PushObj/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: plan_outputs/PushObj/${now:%Y%m%d_%H%M%S}
+    subdir: ${hydra.job.num}
+# Planning reconstructs the model from the selected training run's hydra.yaml.
+# Require the native 32x32 slot/predictor grid used by the released model.
+expected_model_input_size: 512
+expected_slot_spatial_size: 32
+expected_predictor_internal_spatial_size: 32
+expected_object_branch_spatial_sizes: [24, 16, 12]
+expected_mask_softmax_temperature: 1.0
+expected_mask_sharpen_gamma: 2.0
+expected_draw_block_outline: true
+expected_fixed_reference_version: pushobj_grid30_custom_v2_uniform_density_train4_gray_ref32_shared_512_outline_gamma2_color_v2
+expected_fixed_reference_num_frames: 128
+
+goal_file_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/PushObj/targets/test.pkl
+test_trajectory_budget_multiplier: 2.0
+test_trajectory_budget_round_to: 25
+test_context_num: 5
+# Coherent motion across the five primitive actions prevents independent
+# Gaussian directions from cancelling into nearly static context pairs.
+test_context_action_std: 2.0
+test_context_action_temporal_correlation: 0.8
+test_context_min_agent_displacement: 20.0
+test_context_min_object_displacement: 10.0
+# Place the source pusher just outside the real object geometry, then retain
+# only transitions that actually reach contact during the five primitive steps.
+test_context_initial_agent_block_clearance: 2.0
+test_context_require_contact: true
+test_context_contact_tolerance: 1.0
+# Build five stochastic contact families and recall the nearest pusher-state
+# transition from each: translation, +/- moderate torque, +/- strong torque.
+test_context_generation_strategy: pushobj_structured_torque
+
+# n_evals: 24
+# eval_case_indices: [26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+n_evals: 50
+# eval_case_indices: [33, 34, 35, 36, 37, 38, 39, 40]
+
+objective:
+  # Native 32x32 masks create a 1024x1024 transport matrix. Keep objective
+  # chunks small enough to coexist with the resident predictor and rollout.
+  uot_batch_size: 8
+  obstacle_transport:
+    # PushObj uses a separately trained 512px checkpoint and therefore cannot
+    # inherit PushT held-in slot indices. Keep transport disabled as inherited
+    # and recompute its diagnostic scores after retraining.
+    fixed_slot_change_scores: null
+
+planner:
+  # Restore the original PushObj CEM proposal support used before the
+  # temporary wide-range candidate visualization experiment.
+  # Particle actions are clipped directly to an 80px Euclidean norm below;
+  # do not let dataset-dependent normalization statistics move this limit.
+  normalized_action_clip: null
+  sub_planner:
+    # Direct plan.py launches may batch cases; the multi-GPU launcher already
+    # dispatches one case per worker. Keep both paths at one case per forward.
+    trajectory_batch_size: 1
+    target: planning.cem.CEMPlanner
+    horizon: 5
+    # Search complete 25-step trajectories. Every relative primitive command
+    # is explicit; particle CEM preserves all 25 commands as one joint sample.
+    trajectory_prior:
+      enabled: true
+      particle_cem:
+        enabled: true
+        physical_action_clip_px: 80.0
+        # Draw three independent random populations, retain the global top-30
+        # across all 900 candidates, then use the remaining seven CEM rounds
+        # for elite mutation and refinement.
+        random_init_steps: 1
+        # Keep some independent global exploration in every refinement round.
+        # One entry is used by each of the ten CEM generations.
+        # random_fraction_schedule: [1.0, 0.5, 0.25, 0.125, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0]
+        random_fraction_schedule: null
+        min_speed: 0.0
+        # Ordinary primitive actions stay within the original search range.
+        max_speed: 45.0
+        # Maximum signed heading change inside one five-action model step.
+        max_heading_change_degrees: 20.0
+        # The first action after each completed five-action model step may
+        # accelerate and, with 20% probability, choose any new direction.
+        boundary_min_speed: 0.0
+        boundary_max_speed: 80.0
+        boundary_full_direction_probability: 0.1
+        # In each independently sampled trajectory, every primitive action has
+        # this chance to end the global-motion prefix. All later actions become
+        # local, isotropic jitter so candidates can arrive early and remain nearby.
+        early_stop_probability: 0.01
+        post_stop_jitter_max_speed: 5.0
+        # AR(1) correlation applied to speed and heading-change mutations.
+        temporal_correlation: 0.5
+        # Adaptive mutation bounds: elite dispersion determines each round's
+        # noise, with initial_* as the ceiling and final_* as the floor.
+        initial_speed_std: 10.0
+        final_speed_std: 5.0
+        initial_heading_std_degrees: 10.0
+        final_heading_std_degrees: 5.0
+        initial_turn_std_degrees: 10.0
+        final_turn_std_degrees: 5.0
+    topk: 30
+    num_samples: 300
+    # This only chunks the 300 candidates; it does not change the CEM search
+    # population or selected actions. Peak rollout memory scales with this.
+    sample_chunk_size: 25
+    # Three random generations followed by seven mixed refinement generations.
+    opt_steps: 10
+    eval_every: 10

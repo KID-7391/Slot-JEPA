@@ -1,0 +1,29 @@
+name: point_maze
+args: []
+kwargs:
+  render_size: 384
+  # Predictor rollouts use the original continuous MuJoCo dynamics. Random
+  # free-space frames are generated separately only for the fixed slot bank.
+  randomize_ball_position: false
+  # Match planning initial velocities to the empirical training distribution.
+  random_state_velocity_distribution: train_normal
+
+dataset:
+  _target_: "datasets.point_maze_dset.load_point_maze_slice_train_val"
+  # Always replay states through MuJoCo; never use codec-compressed MP4 frames.
+  render_from_state: true
+  render_size: ${img_size}
+  n_rollout: null
+  normalize_action: ${normalize_action}
+  data_path: ${oc.env:DATASET_DIR,${hydra:runtime.cwd}/../../artifacts/data/planar/Maze}
+  split_ratio: 0.9
+  # Non-overlapping windows avoid repeatedly rendering the same states while
+  # retaining the complete continuous trajectories.
+  non_overlapping_causal_windows: true
+  max_causal_windows_per_trajectory: null
+  transform:
+    _target_: "datasets.img_transforms.default_transform"
+    img_size: ${img_size}
+
+decoder_path: null
+num_workers: 16

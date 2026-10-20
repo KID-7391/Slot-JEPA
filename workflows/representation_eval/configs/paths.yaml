@@ -1,0 +1,19 @@
+data:
+  imagenet: data/imagenet-1k
+  fgvc_aircraft: data/fgvc-aircraft-2013b
+  nyuv2: data/depth/nyu
+  kitti: data/depth/KITTI
+  sunrgbd: data/depth/SUNRGBD
+  segmentation_root: data
+  voc_root: data
+  coco: data/coco
+  davis: data/davis-2017/DAVIS
+  ytvos: data/Youtube-VOS
+  mose: data/MOSE
+checkpoints:
+  slot_jepa: ../../artifacts/checkpoints/downstream/robot
+  vjepa_2_1: checkpoints/vjepa_2_1
+  baselines: checkpoints
+outputs:
+  root: outputs
+  generated_configs: outputs/generated_configs

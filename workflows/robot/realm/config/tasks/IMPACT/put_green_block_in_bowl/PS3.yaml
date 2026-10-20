@@ -1,0 +1,51 @@
+###########################################################################################################################################
+# !!! The structure of the file should be: 1st object: Main object for interaction, 2nd obj: target (if applicable), then distractors !!! #
+###########################################################################################################################################
+task:
+  type": "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "put"
+instruction: "put the green block in the bowl"
+instruction_obj_to_replace: "green block"
+instruction_target_to_replace: "bowl"
+instruction_verb_to_replace: "put"
+
+supported_scenes:
+  IMPACT:
+    - "default"
+
+camera_extrinsics:
+  cam1: "default"
+
+main_objects:
+    - type: "PrimitiveObject"
+      name: "cube"
+      primitive_type: "Cube"
+      rgba: [ 0.1953125, 0.65625, 0.3203125, 1.0 ]
+      position: [-0.05, 0.15, 0.771 ]
+      bounding_box: [ 0.025, 0.025, 0.025 ]
+      scale: [ 0.025, 0.025, 0.025 ]
+
+target_objects:
+    - type: "DatasetObject"
+      name: "bowl"
+      category: "bowl"
+      model: "jpvcjv"
+      position: [0.05, -0.15, 0.771]
+      scale: [0.85, 0.85, 0.85]
+
+distractors: []
+immutables: []
+cached_semantic_perturbations:
+  "S-LANG":
+    - ""
+  "S-AFF":
+    - ""
+  "S-INT":
+    - ""
+  "S-PROP":
+    - ""
+  "S-MO":
+    - ""

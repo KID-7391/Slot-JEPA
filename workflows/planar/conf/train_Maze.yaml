@@ -1,0 +1,146 @@
+defaults:
+  - _self_
+  - env: point_maze
+
+ckpt_base_path: ./slot-ac
+
+hydra:
+  run:
+    dir: ${ckpt_base_path}/outputs/Maze/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: ${ckpt_base_path}/outputs/Maze
+    subdir: ${now:%Y%m%d_%H%M%S}_${hydra.job.num}
+
+training:
+  seed: 0
+  epochs: 100
+  # Full-resolution predictor features are memory intensive; use a moderate
+  # global training batch while UOT remains independently chunked.
+  batch_size: 32
+  # Synchronized iterations executed by every rank. Samples per epoch equal
+  # global batch_size * this value, independent of GPU count. Null uses all data.
+  max_iterations_per_epoch: 500
+  validation_batch_size: 128
+  num_workers: 16
+  # Keep validation prefetch conservative because every distributed rank
+  # already holds the slot cache; RGB is rendered only while building it or
+  # exporting validation visualizations.
+  validation_num_workers: 4
+  save_every_x_epoch: 5
+  mixed_precision: bf16
+  predictor_lr: 5e-4
+  # Task-specific action/state/query modules adapt faster than REALM weights.
+  new_module_lr_multiplier: 1.0
+  weight_decay: 1e-5
+  cache_slots: true
+  cache_only: false
+  cache_batch_size: 32
+  cache_num_workers: 4
+  pca_visualize_every: 5
+  pca_visualization:
+    episode_idx: 0
+    num_episodes: 10
+    selection: random
+    start_raw_index: 0
+    num_steps: 12
+
+img_size: 384
+frameskip: 5
+concat_dim: 1
+
+normalize_action: true
+action_emb_dim: 10
+num_action_repeat: 1
+proprio_emb_dim: 10
+num_proprio_repeat: 1
+
+# One adjacent model-step pair forms the query; five context transitions are
+# sampled from the top-50 nearest entries in the training retrieval bank.
+num_hist: 1
+num_pred: 1
+has_predictor: true
+has_decoder: false
+
+model:
+  _target_: models.slot_world_model.SlotMaskWorldModel
+  num_hist: ${num_hist}
+  num_pred: ${num_pred}
+  input_size: ${img_size}
+  patch_size: 16
+  # Native encoder mask grid: 384 / 16 = 24.
+  slot_spatial_size: 24
+  # Run the predictor trunk on the native 24x24 slot grid.
+  predictor_internal_spatial_size: 24
+  # Use the same multi-scale object pyramid in every planar environment.
+  predictor_object_branch_scales:
+    - {spatial_size: 24, dim: 48, depth: 4, num_heads: 3}
+    - {spatial_size: 16, dim: 96, depth: 4, num_heads: 3}
+    - {spatial_size: 12, dim: 196, depth: 4, num_heads: 4}
+  num_objects: 8
+  mask_softmax_temperature: 1.0
+  mask_sharpen_gamma: 2.0
+  # One frozen 768-D vector, calibrated at 512px and shared by all six tasks.
+  color_channel_weights_path: ${hydra:runtime.cwd}/../../artifacts/color_channel_weights/planar_block12_important_objects_v2.pt
+  color_channel_weights_version: planar_important_objects_global_random_shapes_v2_block12_512px
+  color_channel_preserve_token_norm: true
+  # Match Slot-JEPA pretraining and the fixed-reference sampler.
+  visual_normalization: imagenet
+  encoder_contrast_scale: 2.0
+  encoder_flip_tta: true
+  fixed_reference_seed: 0
+  fixed_reference_num_frames: 32
+  predictor_state_dim: 32
+  predictor_use_extrinsics: true
+  predictor_extrinsics_dim: 32
+  predictor_use_warp_concat: true
+  window_size: [1, 1]
+  slots_per_window: 1
+  train_encoder: false
+  train_predictor: true
+  train_decoder: false
+  realm_ckpt_path: ${oc.env:SLOT_JEPA_PRETRAIN_CKPT,${hydra:runtime.cwd}/../../artifacts/checkpoints/pretrain/slot_jepa_pretrained.pt}
+  realm_config_path: ${hydra:runtime.cwd}/../../artifacts/checkpoints/pretrain/slot_jepa_pretrained.yaml
+  predictor_transport_loss_weight: 1.0
+  # Train masks with logit-space KL; probability-space L1 remains inference-only.
+  predictor_mask_l1_loss_weight: 0.0
+  predictor_mask_kl_loss_weight: 10.0
+  # KL alignment of signed x/y Sobel responses over the slot axis.
+  predictor_mask_sobel_loss_weight: 10.0
+  predictor_recon_loss_weight: 1.0
+  # Bound memory for dense transport on the native mask grid; chunking does
+  # not change the loss value.
+  uot_batch_size: 16
+  sinkhorn_iters: 5
+  sinkhorn_entropy_reg: 0.01
+  unbalanced_ot_rho: 0.2
+  mask_transport_area_normalize: true
+  mask_transport_area_normalize_eps: 0.001
+  slot_change_weighting: true
+  slot_change_min_weight: 0.05
+  slot_change_max_weight: 5.0
+  # Match MazeEnv.step(): qvel is clipped before each primitive action.
+  predictor_velocity_clip: 5.0
+  predictor_proprio_loss_weight: 1.0
+  # Decode real input embeddings back to normalized [x, y, vx, vy].
+  proprio_reconstruction_loss_weight: 1.0
+  # Contexts are nearest real transitions retrieved from the training cache.
+  retrieval_num_context: 5
+  retrieval_candidate_pool_size: 50
+  training_retrieval_context: true
+  validation_online_context: true
+  retrieval_bank_size: 32768
+  retrieval_distance_chunk_size: 32768
+  retrieval_visual_distance_weight: 1.0
+  debug_timing: ${debug}
+
+debug: false
+
+# Slot cache and training visualizations replay states through MuJoCo, matching
+# the live RGB path used by planning.
+env:
+  dataset:
+    render_from_state: true
+    render_size: ${img_size}
+    # Use a fixed validation subset and avoid correlated overlapping windows.
+    validation_n_rollout: 1000
+    validation_non_overlapping_causal_windows: true

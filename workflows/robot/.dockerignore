@@ -1,0 +1,28 @@
+.git
+.agents
+.cache
+.codex
+.tmp
+.vscode
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.log
+*.tmp
+*.tar
+*.tar.gz
+*.tar.zst
+*.sif
+
+# Large runtime artifacts should be mounted/uploaded separately on the cloud
+# instance. Baking them into the image makes docker save/upload painfully large.
+outputs
+data
+WM-data
+logs
+runs
+wandb
+
+# Local editor / toolkit checkouts are not needed by the runtime image.
+REALM_toolkit

@@ -1,0 +1,24 @@
+extends: sunrgbd_transfer_nyuv2.yaml
+
+experiment:
+  name: sunrgbd_transfer_nyuv2_vjepa2_1_vitb16_linear_depth
+  output_subdir: depth/sunrgbd_transfer_nyuv2/vjepa2_1_vitb16
+
+model:
+  _replace_: true
+  load_mode: direct_vit_checkpoint
+  model_type: vjepa2
+  model_scale: vit_base
+  ckpt_ref: vjepa_2_1/vjepa2_1_vitb_dist_vitG_384.pt
+  patch_size: 16
+  patch_stride: 16
+  patch_padding: 0
+  video_infer_frames: 2
+  state_dict_key: ema_encoder
+  prefix_filter: null
+  strip_prefix: ""
+  feature_source:
+    mode: single
+    single:
+      source: get_embeddings
+      index: -1

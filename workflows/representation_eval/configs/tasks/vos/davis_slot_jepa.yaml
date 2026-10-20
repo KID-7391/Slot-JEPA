@@ -1,0 +1,53 @@
+# Final DAVIS-val parameters for the released Slot-JEPA checkpoint.
+# J&F-Mean: 0.666.
+experiment:
+  name: davis_slot-jepa
+  output_subdir: vos/davis/slot-jepa
+  seed: 0
+
+model:
+  load_mode: get_models
+  model_type: vjepa2_slot
+  model_scale: vit_base
+  ckpt_ref: slot_jepa/slot_jepa_droid_finetuned.pt
+  patch_size: 16
+  prefix_filter: null
+  strip_prefix: ""
+  video_infer_frames: 2
+  patch_stride: 16
+  patch_padding: 0
+  slot_alpha: 0.3
+  slot_normalize_before_mix: false
+  slot_window_size: [1, 2]
+  slot_slots_per_window: 2
+  slot_global_k: 16
+  slot_mask_temp: 0.05
+  slot_l_max: 24
+  slot_use_decoder_checkpoint: false
+
+data:
+  dataset: davis
+  data_path_ref: davis
+  subset: val
+
+vos:
+  n_last_frames: 20
+  size_mask_neighborhood: 8
+  mask_shape: square
+  topk: 5
+  temperature: 0.1
+  crop: 0
+  frame_short_side: 480
+  frame_align_mode: floor
+  matmul_chunk_size: 2048
+  affinity_dtype: float32
+  feature_dtype: float32
+  label_agg_device: auto
+  align_corners: false
+  feature_chunk_size: 16
+  use_video_clip_features: false
+  slot_reference_num_frames: 16
+  slot_fps_init_mode: first_frame_mask_center
+  num_workers: 4
+  shift_and_stitch_enabled: false
+  shift_and_stitch_factor: 1

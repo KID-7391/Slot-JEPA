@@ -1,0 +1,28 @@
+# Minimal dependencies for running REALM planning/model servers inside an
+# already-provisioned cloud container. Keep torch/torchvision out of this file:
+# those must match the CUDA image and should not be changed by this script.
+msgpack
+pyzmq
+PyYAML
+Pillow
+opencv-python-headless
+scipy
+numpy
+pandas
+pyarrow
+fastparquet
+matplotlib
+seaborn
+tqdm
+einops
+timm
+omegaconf
+submitit
+decord
+imageio
+imageio-ffmpeg
+scikit-learn
+tensorboard
+psutil
+termcolor
+packaging

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+*.pid
+wandb/
+/artifacts/evaluations/
+/workflows/representation_eval/outputs/
+/workflows/planar/plan_outputs/
+/workflows/robot/realm/outputs/
+
+# Large release artifacts are distributed as separate archives. Keep only the
+# package documentation and checksums in Git; downloaded payloads stay local.
+/artifacts/**
+!/artifacts/**/
+!/artifacts/**/README.md
+!/artifacts/**/SHA256SUMS

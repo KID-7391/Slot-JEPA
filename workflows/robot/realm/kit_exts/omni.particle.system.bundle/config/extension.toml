@@ -1,0 +1,9 @@
+[package]
+version = "106.0.0"
+title = "REALM Stub Omni Particle System Bundle"
+description = "No-op local stub used to satisfy optional particle-system dependencies in offline SLOT/VJEPA runs."
+category = "Simulation"
+keywords = ["realm", "stub", "particle"]
+
+[dependencies]
+

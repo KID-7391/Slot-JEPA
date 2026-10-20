@@ -1,0 +1,28 @@
+name: wall
+args: []
+kwargs:
+  render_size: 384
+
+dataset:
+  _target_: "datasets.wall_dset.load_wall_slice_train_val"
+  # Always use the analytic state renderer; never use MP4 frames.
+  render_from_state: true
+  render_size: ${img_size}
+  n_rollout: null
+  normalize_action: ${normalize_action}
+  data_path: ${oc.env:WALL_DATASET_DIR,${hydra:runtime.cwd}/../../artifacts/data/planar/TwoRoom}
+  # Included in slot/retrieval cache names so changes to collision geometry or
+  # analytic rendering cannot silently reuse incompatible cached features.
+  # Ball is composited after walls so its larger visual footprint remains
+  # visible at point-contact states. This version invalidates old slot caches.
+  render_geometry_version: collision_radius1_dot_on_top_trunc1sigma_random_filtered_v3
+  split_ratio: 0.9
+  # The generator filters train/val separately and guarantees >=30% door
+  # crossings in each, so preserve those folders instead of re-splitting.
+  split_mode: "folder"
+  transform:
+    _target_: "datasets.img_transforms.default_transform"
+    img_size: ${img_size}
+
+decoder_path: null
+num_workers: 16

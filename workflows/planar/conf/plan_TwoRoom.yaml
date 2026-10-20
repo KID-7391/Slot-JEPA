@@ -1,0 +1,130 @@
+# Wall-specific entry point. The complete planner settings live in
+# plan_base.yaml; keeping a task entry point prevents TwoRoom and PushT commands from
+# accidentally selecting each other's configuration.
+defaults:
+  - plan_base
+  - _self_
+
+ckpt_base_path: ${hydra:runtime.cwd}/../../artifacts/checkpoints/downstream/planar
+model_name: TwoRoom
+model_epoch: latest
+# Require the native-grid predictor used by newly trained checkpoints.
+expected_model_input_size: 384
+expected_slot_spatial_size: 24
+expected_predictor_internal_spatial_size: 24
+expected_object_branch_spatial_sizes: [24, 16, 12]
+expected_mask_softmax_temperature: 1.0
+expected_mask_sharpen_gamma: 2.0
+expected_color_channel_weights_version: planar_important_objects_global_random_shapes_v2_block12_512px
+hydra:
+  run:
+    dir: plan_outputs/TwoRoom/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: plan_outputs/TwoRoom/${now:%Y%m%d_%H%M%S}
+    subdir: ${hydra.job.num}
+n_evals: 50
+# eval_case_indices: [15,18,29,31,33,41,23]
+goal_source: file
+goal_file_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/TwoRoom/targets/test.pkl
+rerender_file_targets: true
+train_trajectory_budget_multiplier: null
+
+# Shared Wall trajectory parameters used by both particle CEM and the
+# standalone visualization.
+wall_trajectory:
+  frameskip: 5
+  # DotWall advances position by action_scale * commanded velocity.
+  action_scale: 2.0
+  # Spatial displacement magnitudes per primitive action. The first action
+  # uses this same range; it is no longer sampled as a full-canvas position.
+  min_speed: 0.0
+  max_speed: 30.0
+  max_turn_degrees: 30.0
+  boundary_min_speed: 0.0
+  boundary_max_speed: 30.0
+  boundary_full_direction_probability: 0.1
+  early_stop_probability: 0.01
+  post_stop_jitter_max_speed: 4.0
+  boundary_margin: 30.0
+  position_lower_bound: 30.0
+  position_upper_bound: 354.0
+  max_proposals: 100000
+
+wall_trajectory_visualization:
+  test_data_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/TwoRoom/targets/test.pkl
+  output_dir: outputs/wall_trajectory_visualization
+  num_samples: 300
+  num_steps: 25
+  seed: 99
+  scene_size: 384
+  wall_x: 189
+  hole_y: 177
+  wall_width: 35
+  door_half_height: 24
+  border_wall_width: 6
+  collision_radius: 1.0
+  output_filename: pusht_heading_limited_trajectory_samples.png
+
+# Wall-only obstacle discovery and obstacle-aware UOT. The probe actions are
+# evaluated by the frozen WM and never executed in the environment.
+objective:
+  obstacle_transport:
+    enabled: true
+    # Recompute model-global values after training the native-grid checkpoint.
+    # Until then, null selects deterministic online probing instead of reusing
+    # statistics from the obsolete 16x16 mask grid.
+    motion_score_mode: per_frame_difference_topk
+    motion_topk_patches: 10
+    fixed_slot_change_scores: null
+    moving_requires_both_scores: false
+    all_non_moving_static: false
+    moving_topk: 0
+    static_bottomk: 0
+    num_probe_actions: 16
+    probe_action_std: 1.0
+    probe_seed: 1729
+    # Definite obstacle/background slots are below the low threshold; only
+    # strongly changing object slots above the high threshold use geodesic
+    # transport. Moderately changing complementary background slots are ignored.
+    static_change_threshold: 0.1
+    moving_change_threshold: 0.5
+    local_change_fraction: 0.05
+    hardening_temperature: 1.0
+    # Compute the shortest path through a continuous obstacle-resistance field.
+    # No patch is thresholded into a hard wall.
+    cost_mode: geodesic
+    # Traversing mask value o scales local distance by (1 + weight * o).
+    penalty_weight: 20.0
+    # Start without dilation: one 16x16 patch is already large relative to the
+    # PointMaze ball and can close narrow passages. Increase only if needed.
+    obstacle_dilation: 0
+
+planner:
+  max_env_steps: 50
+  sub_planner:
+    # Search complete 25-action, heading-limited velocity trajectories. CEM
+    # keeps and mutates whole trajectories instead of fitting independent
+    # Gaussian velocities at each model step.
+    trajectory_prior:
+      enabled: true
+      action_scale: ${wall_trajectory.action_scale}
+      particle_cem:
+        enabled: true
+        min_speed: ${wall_trajectory.min_speed}
+        max_speed: ${wall_trajectory.max_speed}
+        max_heading_change_degrees: ${wall_trajectory.max_turn_degrees}
+        boundary_min_speed: ${wall_trajectory.boundary_min_speed}
+        boundary_max_speed: ${wall_trajectory.boundary_max_speed}
+        boundary_full_direction_probability: ${wall_trajectory.boundary_full_direction_probability}
+        early_stop_probability: ${wall_trajectory.early_stop_probability}
+        post_stop_jitter_max_speed: ${wall_trajectory.post_stop_jitter_max_speed}
+        position_lower_bound: ${wall_trajectory.position_lower_bound}
+        position_upper_bound: ${wall_trajectory.position_upper_bound}
+        max_proposals: ${wall_trajectory.max_proposals}
+        temporal_correlation: 0.8
+        initial_speed_std: 4.0
+        final_speed_std: 1.0
+        initial_heading_std_degrees: 30.0
+        final_heading_std_degrees: 5.0
+        initial_turn_std_degrees: 10.0
+        final_turn_std_degrees: 2.0

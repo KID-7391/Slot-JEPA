@@ -1,0 +1,36 @@
+robots:
+  - name: "DROID"
+    type: "DROID"
+    obs_modalities: ["rgb", "proprio"]
+    proprio_obs: ["joint_qpos"]
+    control_freq: 15
+    action_normalize: False
+    action_type: "continuous"
+    friction: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    armature: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+    controller_name: "IndividualJointPDController"
+    controller_config:
+        arm_0:
+            name: "IndividualJointPDController"
+            "motor_type": "position"
+            control_freq: 15
+            use_delta_commands: False
+            use_impedances: True
+            use_gravity_compensation: False
+            use_cc_compensation: False
+            command_output_limits: null
+            command_input_limits: null
+            kp: 400
+            kd: 80
+            max_effort: [ 87.0, 87.0, 87.0, 87.0, 12.0, 12.0, 12.0 ]
+            min_effort: [ -87.0, -87.0, -87.0, -87.0, -12.0, -12.0, -12.0 ]
+        gripper_0:
+          name: "CustomGripperController"
+          mode: "binary"
+    sensor_config:
+      VisionSensor:
+        sensor_kwargs:
+          image_height: 720
+          image_width: 1280
+          focal_length: 2.8
+

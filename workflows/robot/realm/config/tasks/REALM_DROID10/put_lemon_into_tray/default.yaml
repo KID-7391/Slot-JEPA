@@ -1,0 +1,79 @@
+task:
+  type: "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "put"
+instruction: "put the lemon in the tray"
+instruction_obj_to_replace: "lemon"
+instruction_target_to_replace: "tray"
+instruction_verb_to_replace: "put"
+
+supported_scenes:
+  Pomaria_1_int:
+    - "Table"
+
+camera_extrinsics:
+  cam1: "ep_024104_cam1"
+  cam2: "ep_024104_cam2"
+
+reset_joint_pos: [ 0.0055956, -0.46229482, -0.10837201, -2.22445, -0.02223617, 1.6368663, -0.28468588]
+
+main_objects:
+    - type: "DatasetObject"
+      name: "lemon"
+      category: "lemon"
+      model: "asdada"
+      bounding_box: [0.05, 0.07, 0.05]
+      relative_bbox_position: [0.18, 0.3, 0.04]
+
+target_objects:
+    - type: "DatasetObject"
+      name: "tray"
+      category: "tray"
+      model: "xzcnjq"
+      bounding_box: [0.23, 0.35, 0.05]
+      orientation: [ 0, 0, -0.3826834, 0.9238795 ]
+      relative_bbox_position: [0.24, 0.55, 0.0]
+
+distractors:
+    - type: "DatasetObject"
+      name: "table_knife"
+      category: "table_knife"
+      model: "eebpap"
+      bounding_box: [0.27, 0.03, 0.01]
+      orientation: [ 0, 0, -0.3826834, 0.9238795 ]
+      relative_bbox_position: [0.3, 0.42, 0.0]
+    - type: "DatasetObject"
+      name: "water_glass"
+      category: "water_glass"
+      model: "lvqgvn"
+      bounding_box: [0.06, 0.06, 0.15]
+      relative_bbox_position: [0.65, 0.48, 0.04]
+    - type: "DatasetObject"
+      name: "bottle_of_wine"
+      category: "bottle_of_wine"
+      model: "tisclo"
+      bounding_box: [0.075, 0.075, 0.24]
+      relative_bbox_position: [0.43, 0.18, 0.125]
+    - type: "DatasetObject"
+      name: "toy_dice_dist"
+      category: "toy_dice"
+      model: "gcevml"
+      bounding_box: [0.05, 0.05, 0.05]
+      relative_bbox_position: [0.35, 0.1, 0.03]
+
+cached_semantic_perturbations:
+  S-LANG:
+    - "put the lemon in the tray"
+    - "place the lemon inside the tray"
+    - "drop the lemon into the tray"
+  S-AFF:
+    - "move the object into the container"
+    - "store the lemon in the tray"
+  S-INT:
+    - "transfer the target object into the receptacle"
+  S-PROP:
+    - "put the visible lemon into the tray"
+  S-MO:
+    - "put the lemon into the nearby tray"

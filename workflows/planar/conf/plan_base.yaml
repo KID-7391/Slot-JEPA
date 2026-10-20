@@ -1,0 +1,114 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: plan_outputs/${now:%Y%m%d%H%M%S}_${replace_slash:${model_name}}_gH${goal_H}
+  sweep:
+    dir: plan_outputs/${now:%Y%m%d%H%M%S}_${replace_slash:${model_name}}_gH${goal_H}
+    subdir: ${hydra.job.num}
+
+# Released planar checkpoints live in the shared outer artifact directory.
+ckpt_base_path: ${hydra:runtime.cwd}/../../artifacts/checkpoints/downstream/planar
+model_name: null
+model_epoch: latest
+
+# Retrieval banks are derived from the released raw training trajectories.
+# Reuse a local cache when present and rebuild it automatically when absent.
+auto_build_retrieval_bank: true
+inference_cache_dir: ${hydra:runtime.cwd}/slot-ac
+
+seed: 99
+n_evals: 50
+goal_source: random_state
+goal_H: 5
+n_plot_samples: 10
+save_video: false
+# Master switch for videos, slot/PCA figures, and visualization artifacts.
+# Set false for throughput/performance evaluation.
+visualization: true
+wandb_logging: false
+
+# Bound evaluation time to twice the longest action trajectory used for training.
+train_trajectory_budget_multiplier: 2.0
+
+slot_pca:
+  enabled: true
+  num_samples: 10
+
+# Default inference retrieval length. It is independent of the training query
+# window length and may be overridden by an environment-specific plan config.
+inference_retrieval:
+  num_context: 5
+  candidate_pool_size: 50
+
+# Planning-time ablation hook. "relevance" preserves A0 behavior; A3 uses
+# recent trajectory context and A4 samples the complete in-trajectory history.
+planning_memory:
+  mode: relevance
+  num_context: ${inference_retrieval.num_context}
+  history_window: 20
+  seed: ${seed}
+
+# Retrieve this many proprio-nearest transitions from a shared per-layout pool.
+# The pool is built and encoded once, cached on disk, and does not consume task
+# trajectory steps. Set to 0 for zero-shot training-bank retrieval.
+test_context_num: 0
+test_context_seed: ${seed}
+test_context_pool_size: 1000
+test_context_cache_dir: ${inference_cache_dir}/context_cache
+# Normalized-action standard deviation used while constructing the pool.
+test_context_action_std: 1.5
+# Wall source velocity is sampled from the training-state mean/std and scaled
+# by this factor before clipping to the physical action bounds.
+test_context_velocity_std_scale: 1.0
+debug_dset_init: False
+
+objective:
+  _target_: planning.objectives.create_uot_objective_fn
+  alpha: 0.0
+  base: 2
+  mode: last
+  uot_loss_weight: 1.0
+  # Planning visual objective = UOT + this weight * mask L1.
+  mask_l1_loss_weight: 10.0
+  sinkhorn_iters: 5
+  entropy_reg: 0.01
+  unbalanced_ot_rho: 0.2
+  # Normalize raw mass-scaled UOT and emphasize slots that differ between the
+  # current real context and the goal. Weights stay fixed within each CEM run.
+  mask_transport_area_normalize: true
+  mask_transport_area_normalize_eps: 0.001
+  slot_change_weighting: true
+  slot_change_min_weight: 0.05
+  slot_change_max_weight: 5.0
+  # Shared memory-bounded chunk size for native 24x24/32x32 mask grids.
+  uot_batch_size: 16
+
+planner:
+  _target_: planning.mpc.MPCPlanner
+  max_iter: null
+  # Match the original DINO-WM MPC schedule: one CEM call jointly searches all
+  # five model steps, then commits and executes the complete block before the
+  # next observation/retrieval. With frameskip=5 this is 25 primitive env steps.
+  n_taken_actions: 5
+  predictive_replan_within_block: false
+  sub_planner:
+    target: planning.cem.CEMPlanner
+    horizon: 5
+    topk: 10
+    num_samples: 100
+    # Fewer rollout calls than the old value 30; lower this only if GPU memory
+    # is insufficient.
+    sample_chunk_size: 25
+    # Plan two independent evaluation cases in each model call.
+    trajectory_batch_size: 1
+    var_scale: 1
+    opt_steps: 10
+    # Evaluate the converged CEM mean once at the end of the optimization.
+    eval_every: 10
+    # Persist every tested CEM batch in the current run/attempt directory so
+    # proposal and objective diagnostics never need to be reconstructed later.
+    proposal_dump_path: cem_proposals
+    dump_loss_components: true
+  name: mpc_cem

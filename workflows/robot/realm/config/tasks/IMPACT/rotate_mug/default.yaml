@@ -1,0 +1,46 @@
+###########################################################################################################################################
+# !!! The structure of the file should be: 1st object: Main object for interaction, 2nd obj: target (if applicable), then distractors !!! #
+###########################################################################################################################################
+task:
+  type": "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "rotate"
+instruction: "rotate the mug"
+instruction_obj_to_replace: "mug"
+instruction_target_to_replace: ""
+instruction_verb_to_replace: "rotate"
+
+supported_scenes:
+  IMPACT:
+    - "default"
+
+camera_extrinsics:
+  cam1: "default"
+
+reset_joint_pos: [-0.12872958, -0.3024, -0.1587609, -1.9855824, -0.01000371, 1.4275427, -0.02166059]
+
+main_objects:
+  - type: "DatasetObject"
+    name: "mug"
+    category: "mug"
+    model: "waqrdy"
+    bounding_box: [0.12, 0.08, 0.14]
+    position: [0.0, 0.0, 0.79]
+
+target_objects: []
+distractors: []
+immutables: []
+
+cached_semantic_perturbations:
+  "S-LANG":
+    - ""
+  "S-AFF":
+    - ""
+  "S-INT":
+    - ""
+  "S-PROP":
+    - ""
+  "S-MO":
+    - ""

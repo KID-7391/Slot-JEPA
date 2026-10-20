@@ -1,0 +1,70 @@
+defaults:
+  - train_Maze
+  - _self_
+
+hydra:
+  run:
+    dir: ${ckpt_base_path}/outputs/MazeR/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: ${ckpt_base_path}/outputs/MazeR
+    subdir: ${now:%Y%m%d_%H%M%S}_${hydra.job.num}
+
+env:
+  kwargs:
+    u_layout:
+      stem_width: 0.7
+      stem_length: 1.5
+      center_inner_stem: true
+  dataset:
+    data_path: ${oc.env:DATASET_DIR,${hydra:runtime.cwd}/../../artifacts/data/planar/MazeR}
+    split_mode: manifest
+    # Keep the complete 500-trajectory generalization validation set.
+    validation_n_rollout: null
+    validation_non_overlapping_causal_windows: true
+    # Translate each layout and its states so the inner stem is fixed at the
+    # camera center. Translation leaves velocities and actions unchanged.
+    center_u_stem: true
+    render_geometry_version: maze_u_centered_stem_v1
+
+training:
+  seed: 0
+  # Synchronized iterations executed by every rank. Samples per epoch equal
+  # global batch_size * this value, independent of GPU count. Null uses all data.
+  max_iterations_per_epoch: 500
+  validation_batch_size: 128
+  num_workers: 16
+  # Keep validation prefetch conservative because every distributed rank
+  # already holds the slot cache; RGB is rendered only while building it or
+  # exporting validation visualizations.
+  validation_num_workers: 4
+  save_every_x_epoch: 5
+  mixed_precision: bf16
+  predictor_lr: 5e-4
+  # Task-specific action/state/query modules adapt faster than REALM weights.
+  new_module_lr_multiplier: 1.0
+  weight_decay: 1e-2
+  cache_slots: true
+  cache_batch_size: 32
+  cache_num_workers: 4
+  pca_visualize_every: 5
+  pca_visualization:
+    episode_idx: 0
+    num_episodes: 10
+    selection: random
+    start_raw_index: 0
+    num_steps: 12
+  
+model:
+  # Give every held-in U-Maze layout an equal share of the fixed bank, then
+  # sample random ball positions within each layout. With 32 frames and five
+  # layouts the deterministic allocation is 6 or 7 frames per layout.
+  fixed_reference_source: dataset
+  fixed_reference_sampling: balanced_layout
+  fixed_reference_version: maze_u_5train_layouts_balanced_random_ball_v1
+  # Cache entries are bound to their exact state/layout slice and validated
+  # when loaded. This invalidates older unbound caches.
+  slot_cache_version: state_environment_slice_bound_gamma2_color_v2
+  # ICL training contexts model online adaptation: each query only sees real
+  # transitions from its own held-in layout.
+  training_retrieval_same_layout_only: true
+  validation_online_context: true

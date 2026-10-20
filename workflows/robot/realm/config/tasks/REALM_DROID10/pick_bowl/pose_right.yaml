@@ -1,0 +1,127 @@
+task:
+  type: DummyTask
+  termination_config: {}
+  reward_config: {}
+task_type: pick
+instruction: pick up the bowl next to the oatmeal can
+instruction_obj_to_replace: bowl
+instruction_target_to_replace: ''
+instruction_verb_to_replace: pick up
+supported_scenes:
+  Merom_1_int:
+  - Table
+camera_extrinsics:
+  cam1: ep_001505_cam1
+  cam2: ep_001505_cam2
+reset_joint_pos:
+- -0.11952213
+- -0.5059374
+- -0.28497612
+- -2.4112132
+- -0.18034634
+- 1.9153982
+- -0.43432593
+main_objects:
+- type: DatasetObject
+  name: bowl
+  category: bowl
+  model: adciys
+  bounding_box:
+  - 0.15
+  - 0.15
+  - 0.06
+  relative_bbox_position:
+  - 0.29
+  - 0.24
+  - 0.0
+target_objects: []
+distractors:
+- type: DatasetObject
+  name: can_oatmeal_dist
+  category: can_of_oatmeal
+  model: qyukhm
+  bounding_box:
+  - 0.08
+  - 0.08
+  - 0.12
+  relative_bbox_position:
+  - 0.56
+  - 0.12
+  - 0.06
+- type: DatasetObject
+  name: lid
+  category: lid
+  model: gerjlh
+  bounding_box:
+  - 0.2
+  - 0.2
+  - 0.07
+  relative_bbox_position:
+  - 0.14
+  - 0.56
+  - 0.03
+- type: DatasetObject
+  name: orange
+  category: orange
+  model: ucstpm
+  bounding_box:
+  - 0.08
+  - 0.09
+  - 0.08
+  relative_bbox_position:
+  - 0.58
+  - 0.46
+  - 0.05
+- type: DatasetObject
+  name: teaspoon_dist
+  category: teaspoon
+  model: eilfij
+  bounding_box:
+  - 0.04
+  - 0.19
+  - 0.01
+  relative_bbox_position:
+  - 0.50
+  - 0.52
+  - 0.1
+  orientation:
+  - 0
+  - 0
+  - 0.7071068
+  - 0.7071068
+immutables:
+- type: DatasetObject
+  name: frying_pan
+  category: frying_pan
+  model: aewpzn
+  bounding_box:
+  - 0.37
+  - 0.24
+  - 0.08
+  relative_bbox_position:
+  - 0.66
+  - 0.34
+  - 0.0
+cached_semantic_perturbations:
+  S-LANG:
+  - pick up the bowl next to the oatmeal can
+  - grasp the bowl next to the oatmeal can
+  - lift the bowl beside the oatmeal can
+  - take the bowl from the table
+  - grab the small bowl near the can
+  S-AFF:
+  - take the bowl from the table
+  - pick up the bowl
+  - grasp the bowl rim
+  S-INT:
+  - pick up the target object
+  - lift the nearby bowl
+  - grasp the bowl-shaped object
+  S-PROP:
+  - pick up the round bowl
+  - grasp the bowl beside the can
+  - lift the bowl on the table
+  S-MO:
+  - pick up the bowl near the oatmeal can
+  - grasp the bowl next to the table objects
+  - lift the bowl from the tabletop

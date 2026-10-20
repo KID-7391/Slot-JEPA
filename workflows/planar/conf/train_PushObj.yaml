@@ -1,0 +1,122 @@
+defaults:
+  - train_PushT
+  - _self_
+
+hydra:
+  run:
+    dir: ${ckpt_base_path}/outputs/PushObj/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: ${ckpt_base_path}/outputs/PushObj
+    subdir: ${now:%Y%m%d_%H%M%S}_${hydra.job.num}
+
+env:
+  kwargs:
+    shape: I
+    color: LightSlateGray
+    # Match PushT's rendering: one shared object color and a dark silhouette.
+    # color_override also prevents planning env_info from restoring the colors
+    # stored in the original multi-color manifests.
+    color_override: LightSlateGray
+    draw_block_outline: true
+    use_geometric_center_eval: true
+  dataset:
+    # Fresh B2 trajectories are simulated for ten primitive steps and randomly
+    # cropped to five. The 60k retained pairs reproduce v25's per-shape
+    # displacement/contact proportions without copying any old training pair.
+    data_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/PushObj
+    split_mode: manifest
+    # Keep both complete PushObj validation domains; only PushT is capped.
+    validation_n_rollout: null
+    validation_non_overlapping_causal_windows: true
+    draw_block_outline: true
+    # Override manifest colors in train, held-out, and named validation splits.
+    color_override: LightSlateGray
+    # Report prediction losses on both validation domains. ``valid`` remains
+    # the held-out L/+ split (OOD); this named split uses the four train shapes.
+    validation_data_paths:
+      id: ${hydra:runtime.cwd}/../../artifacts/data/planar/PushObj/validation
+
+# Keep the native PushT canvas all the way through the frozen encoder. With a
+# 16-pixel patch size, slot extraction produces a native 32x32 feature/mask
+# grid, and the main predictor stays on that grid without spatial recovery.
+img_size: 512
+# Keep PushObj predictor training single-step, matching the original Slot-AC
+# training setup. Multi-step behavior is evaluated through open-loop planning.
+num_pred: 1
+
+model:
+  input_size: ${img_size}
+  # Native encoder mask grid: 512 / 16 = 32.
+  slot_spatial_size: 32
+  predictor_internal_spatial_size: 32
+  mask_softmax_temperature: 1.0
+  mask_sharpen_gamma: 2.0
+  # Use the same multi-scale object pyramid as every other planar environment.
+  predictor_object_branch_scales:
+    - {spatial_size: 24, dim: 48, depth: 4, num_heads: 3}
+    - {spatial_size: 16, dim: 96, depth: 4, num_heads: 3}
+    - {spatial_size: 12, dim: 196, depth: 4, num_heads: 4}
+  # Initialize one shared slot bank once at 512px. The 128 live references
+  # contain 32 separated pusher/object frames for each of the four training
+  # shapes, all rendered in the same LightSlateGray used by the dataset.
+  fixed_reference_source: live_env
+  fixed_reference_sampling: balanced_shape_color_live
+  fixed_reference_num_frames: 128
+  fixed_reference_frames_per_shape: 32
+  fixed_reference_shapes: [I, Z, small_tee, square]
+  fixed_reference_colors:
+    - LightSlateGray
+  fixed_reference_version: pushobj_grid30_custom_v2_uniform_density_train4_gray_ref32_shared_512_outline_gamma2_color_v2
+  # The slice identity also binds each cached mask to its source shape/color.
+  slot_cache_version: state_environment_slice_bound_shape_gray_gamma2_color_v2_native32_stride1_outline_grid30_uniform_density_fresh_b2
+  # Here layout_id denotes object shape; color is deliberately ignored.
+  training_retrieval_same_layout_only: true
+  retrieval_num_context: 5
+  validation_online_context: true
+  # Preserve the retained random-crop transition distribution in the retrieval bank.
+  retrieval_rotation_balance_bin_edges_degrees: null
+  # Predictor output and mask supervision stay at native 32x32 resolution.
+  # Dense 32x32 transport uses a 1024x1024 cost matrix. Smaller chunks keep
+  # peak memory bounded without changing the loss.
+  uot_batch_size: 16
+  predictor_transport_loss_weight: 0.1
+  predictor_mask_l1_loss_weight: 0.0
+  predictor_mask_kl_loss_weight: 10.0
+  # KL alignment of signed x/y Sobel responses over the slot axis.
+  predictor_mask_sobel_loss_weight: 10.0
+  predictor_recon_loss_weight: 1.0
+
+training:
+  seed: 0
+  epochs: 200
+  batch_size: 32
+  # Synchronized iterations executed by every rank. Samples per epoch equal
+  # global batch_size * this value, independent of GPU count. Null uses all data.
+  max_iterations_per_epoch: 500
+  validation_batch_size: 128
+  validation_num_workers: 4
+  num_workers: 16
+  save_every_x_epoch: 5
+  mixed_precision: bf16
+  predictor_lr: 5e-4
+  # Task-specific action/state/query modules adapt faster than REALM weights.
+  new_module_lr_multiplier: 1.0
+  weight_decay: 1e-4
+  # Use ordinary shuffled sampling without rotation-bin stratification.
+  rotation_balance_bin_edges_degrees: null
+  # Cache masks at model-observation frames; the single fixed slot bank stays
+  # in the model.
+  cache_slots: true
+  # Set true to build/validate caches without entering training.
+  cache_only: false
+  # Per GPU. Workers replay trajectory states through the lossless renderer in
+  # parallel while the current batch runs through the frozen extractor.
+  cache_batch_size: 32
+  cache_num_workers: 4
+  pca_visualize_every: 5
+  pca_visualization:
+    episode_idx: 0
+    num_episodes: 10
+    selection: random
+    start_raw_index: 0
+    num_steps: 12

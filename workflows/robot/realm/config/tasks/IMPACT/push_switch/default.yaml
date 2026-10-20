@@ -1,0 +1,48 @@
+###########################################################################################################################################
+# !!! The structure of the file should be: 1st object: Main object for interaction, 2nd obj: target (if applicable), then distractors !!! #
+###########################################################################################################################################
+task:
+  type": "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "push"
+instruction: "push the light switch"
+instruction_obj_to_replace: "light switch"
+instruction_target_to_replace: ""
+instruction_verb_to_replace: "push"
+
+supported_scenes:
+  IMPACT:
+    - "default"
+
+camera_extrinsics:
+  cam1: "default"
+
+reset_joint_pos: [-0.04819933, -0.51226175, 0.05805873, -2.5092928, -0.21693854, 2.1945348, 0.02541593]
+
+main_objects:
+  - type: "DatasetObject"
+    name: "electric_switch"
+    category: "electric_switch"
+    model: "oedwla"
+    bounding_box: [0.025, 0.06, 0.12]
+    position: [0.0, 0.0, 0.79]
+    fixed_base: True
+    orientation: [0, 0, -0.7071068, 0.7071068]
+
+target_objects: []
+distractors: []
+immutables: []
+
+cached_semantic_perturbations:
+  "S-LANG":
+    - ""
+  "S-AFF":
+    - ""
+  "S-INT":
+    - ""
+  "S-PROP":
+    - ""
+  "S-MO":
+    - ""

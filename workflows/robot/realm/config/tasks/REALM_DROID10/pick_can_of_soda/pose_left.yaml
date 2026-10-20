@@ -1,0 +1,79 @@
+task:
+  type: "DummyTask"
+  termination_config: {}
+  reward_config: {}
+
+task_type: "pick"
+instruction: "pick up the can of soda"
+instruction_obj_to_replace: "can of soda"
+instruction_target_to_replace: ""
+instruction_verb_to_replace: "pick up"
+
+supported_scenes:
+  Merom_1_int:
+    - "Table"
+
+camera_extrinsics:
+  cam1: "ep_001505_cam1"
+  cam2: "ep_001505_cam2"
+
+reset_joint_pos: [-0.11952213, -0.5059374, -0.28497612, -2.4112132, -0.18034634, 1.9153982, -0.43432593]
+
+main_objects:
+    - type: "DatasetObject"
+      name: "can_of_soda"
+      category: "can_of_soda"
+      model: "itolcg"
+      bounding_box: [0.07, 0.07, 0.12]
+      relative_bbox_position: [0.11, 0.28, 0.07]
+
+target_objects: []
+
+distractors:
+    - type: "DatasetObject"
+      name: "table_knife"
+      category: "table_knife"
+      model: "eebpap"
+      bounding_box: [0.27, 0.03, 0.01]
+      orientation: [ 0, 0, -0.3826834, 0.9238795 ]
+      relative_bbox_position: [0.3, 0.42, 0.0]
+    - type: "DatasetObject"
+      name: "water_glass"
+      category: "water_glass"
+      model: "lvqgvn"
+      bounding_box: [0.06, 0.06, 0.15]
+      relative_bbox_position: [0.65, 0.48, 0.04]
+    - type: "DatasetObject"
+      name: "bottle_of_wine"
+      category: "bottle_of_wine"
+      model: "tisclo"
+      bounding_box: [0.075, 0.075, 0.24]
+      relative_bbox_position: [0.43, 0.18, 0.125]
+    - type: "DatasetObject"
+      name: "toy_dice_dist"
+      category: "toy_dice"
+      model: "gcevml"
+      bounding_box: [0.05, 0.05, 0.05]
+      relative_bbox_position: [0.35, 0.1, 0.03]
+
+immutables:
+    - type: "DatasetObject"
+      name: "plate"
+      category: "plate"
+      model: "ntedfx"
+      bounding_box: [0.15, 0.15, 0.03]
+      relative_bbox_position: [0.12, 0.52, 0.0]
+
+cached_semantic_perturbations:
+  S-LANG:
+    - "pick up the can of soda"
+    - "grasp the can of soda"
+    - "lift the can of soda"
+  S-AFF:
+    - "take the object from the table"
+  S-INT:
+    - "pick up the target object"
+  S-PROP:
+    - "pick up the visible can of soda"
+  S-MO:
+    - "pick up the can of soda near the center"

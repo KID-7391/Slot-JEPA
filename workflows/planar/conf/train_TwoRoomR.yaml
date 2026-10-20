@@ -1,0 +1,71 @@
+defaults:
+  - train_TwoRoom
+  - _self_
+
+hydra:
+  run:
+    dir: ${ckpt_base_path}/outputs/TwoRoomR/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: ${ckpt_base_path}/outputs/TwoRoomR
+    subdir: ${now:%Y%m%d_%H%M%S}_${hydra.job.num}
+
+env:
+  dataset:
+    # Approved wide-action v3: exactly half of train/validation trajectories
+    # execute a true door crossing; the remainder hit central/border walls.
+    data_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/TwoRoomR
+    split_mode: manifest
+    # Match TwoRoom: retain every overlapping five-action training window.
+    non_overlapping_causal_windows: false
+    # Keep the complete 500-trajectory generalization validation set while
+    # avoiding correlated overlapping validation windows.
+    validation_n_rollout: null
+    validation_non_overlapping_causal_windows: true
+    source_coordinate_size: 65
+    # Ball-on-top compositing fixes contact frames where the larger rendered
+    # marker was previously hidden by the wall and invalidates old slot caches.
+    render_geometry_version: wall_random_wide_cross50_manifest_65_to_384_ball_on_top_v4
+
+training:
+  seed: 0
+  # Preserve at least 50% contact dynamics after slicing the random-action
+  # trajectories into five-action model transitions.
+  collision_pair_fraction: 0.5
+  # Synchronized iterations executed by every rank. Samples per epoch equal
+  # global batch_size * this value, independent of GPU count. Null uses all data.
+  max_iterations_per_epoch: 500
+  validation_batch_size: 128
+  num_workers: 16
+  save_every_x_epoch: 5
+  mixed_precision: bf16
+  predictor_lr: 5e-4
+  # Task-specific action/state/query modules adapt faster than REALM weights.
+  new_module_lr_multiplier: 1.0
+  weight_decay: 5e-4
+  cache_slots: true
+  pca_visualize_every: 5
+  pca_visualization:
+    episode_idx: 0
+    num_episodes: 10
+    selection: random
+    start_raw_index: 0
+    num_steps: 12
+  predictor_transport_loss_weight: 0.1
+  predictor_mask_l1_loss_weight: 10.0
+  predictor_recon_loss_weight: 0.1
+
+model:
+  # Cover all five held-in wall layouts instead of initializing every slot from
+  # the legacy single live layout.
+  fixed_reference_source: dataset
+  fixed_reference_version: wall_5train_layout_manifest_25step_v3
+  # Rebuild old unbound caches; new entries carry exact state/layout/slice
+  # metadata and fail fast if reused with another slice ordering.
+  slot_cache_version: state_environment_slice_bound_wall_gamma2_color_v2
+  # ICL training contexts model online adaptation: each query only sees real
+  # transitions from its own held-in layout.
+  training_retrieval_same_layout_only: true
+  # Match the ICL bank to the collision-balanced query distribution. This tag
+  # is included in the cache filename so incompatible banks are not reused.
+  retrieval_collision_pair_fraction: 0.5
+  validation_online_context: true

@@ -1,0 +1,10 @@
+scene:
+  type: Scene
+  floor_plane_visible: True
+  floor_plane_color:
+    - 0.90
+    - 0.80
+    - 0.30
+  use_skybox: True
+
+objects: []

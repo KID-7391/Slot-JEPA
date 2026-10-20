@@ -1,0 +1,103 @@
+experiment:
+  name: nyuv2_slot-jepa_vitb16_linear_depth
+  output_subdir: depth/nyuv2/slot-jepa_vitb16
+  seed: 321
+
+model:
+  load_mode: direct_vit_checkpoint
+  model_type: vjepa2_slot
+  model_scale: vit_base
+  ckpt_ref: slot_jepa/slot_jepa_droid_finetuned.pt
+  patch_size: 16
+  patch_stride: 16
+  patch_padding: 0
+  video_infer_frames: 2
+  slot_alpha: 0.3
+  slot_window_size: [2, 4]
+  slot_slots_per_window: 4
+  slot_global_k: 16
+  slot_mask_temp: 0.05
+  slot_l_max: 24
+  slot_use_decoder_checkpoint: false
+  state_dict_key: null
+  prefix_filter: null
+  strip_prefix: ""
+  feature_source:
+    mode: single
+    single:
+      source: get_embeddings
+      index: -1
+
+data:
+  root_ref: nyuv2
+  dataset: nyuv2
+  splits:
+    train: nyu_train.txt
+    val: nyu_test.txt
+    test: nyu_test.txt
+  normalization_constant: 1000.0
+  train:
+    fixed_crop: NYU
+    random_crop_size: [416, 544]
+    gamma_range: [0.9, 1.1]
+    brightness_range: [0.75, 1.25]
+    color_range: [0.9, 1.1]
+    rotation_angle: 2.5
+    color_aug_prob: 0.5
+    hflip_prob: 0.5
+    eval_mask: FULL
+  eval:
+    img_size: null
+    fixed_crop: FULL
+    eval_mask: NYU_EIGEN
+
+head:
+  type: linear
+  use_batchnorm: true
+  n_output_channels: 256
+  min_depth: 0.001
+  max_depth: 10.0
+  bins_strategy: linear
+  norm_strategy: linear
+
+train:
+  global_batch_size: 16
+  max_steps: 38400
+  grad_clip: 35.0
+  optimizer:
+    type: adamw
+    lr: 0.0003
+    betas: [0.9, 0.99]
+    weight_decay: 0.0001
+  scheduler:
+    type: warmup_onecycle
+    warmup_iters: 12800
+    final_div_factor: 1000.0
+    base_momentum: 0.85
+    max_momentum: 0.95
+  amp:
+    enabled: true
+    dtype: float16
+
+loss:
+  sigloss: 1.0
+
+eval:
+  batch_size: 1
+  metrics: [rmse, abs_rel, a1]
+  min_depth: 0.001
+  max_depth: 10.0
+  ignored_value: 0.0
+  use_tta: true
+  align_least_squares: false
+  eval_period_iterations: 1600
+  val_split: val
+  test_split: test
+
+distributed:
+  num_workers: 4
+  persistent_workers: false
+
+result:
+  save_results: false
+  save_format: png

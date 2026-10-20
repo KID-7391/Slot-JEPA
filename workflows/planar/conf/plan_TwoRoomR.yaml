@@ -1,0 +1,47 @@
+defaults:
+  - plan_TwoRoom
+  - _self_
+
+model_name: TwoRoomR
+hydra:
+  run:
+    dir: plan_outputs/TwoRoomR/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: plan_outputs/TwoRoomR/${now:%Y%m%d_%H%M%S}
+    subdir: ${hydra.job.num}
+goal_file_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/TwoRoomR/targets/test.pkl
+test_trajectory_budget_multiplier: 2.0
+test_trajectory_budget_round_to: 25
+test_context_num: 5
+
+objective:
+  obstacle_transport:
+    enabled: true
+    # Recompute model-global values after training the native-grid checkpoint.
+    # Until then, null selects deterministic online probing instead of reusing
+    # statistics from the obsolete 16x16 mask grid.
+    motion_score_mode: per_frame_difference_topk
+    motion_topk_patches: 10
+    fixed_slot_change_scores: null
+    moving_requires_both_scores: false
+    all_non_moving_static: false
+    moving_topk: 0
+    static_bottomk: 0
+    num_probe_actions: 16
+    probe_action_std: 1.0
+    probe_seed: 1729
+    # Definite obstacle/background slots are below the low threshold; only
+    # strongly changing object slots above the high threshold use geodesic
+    # transport. Moderately changing complementary background slots are ignored.
+    static_change_threshold: 0.1
+    moving_change_threshold: 0.5
+    local_change_fraction: 0.05
+    hardening_temperature: 1.0
+    # Compute the shortest path through a continuous obstacle-resistance field.
+    # No patch is thresholded into a hard wall.
+    cost_mode: geodesic
+    # Traversing mask value o scales local distance by (1 + weight * o).
+    penalty_weight: 20.0
+    # Start without dilation: one 16x16 patch is already large relative to the
+    # PointMaze ball and can close narrow passages. Increase only if needed.
+    obstacle_dilation: 0

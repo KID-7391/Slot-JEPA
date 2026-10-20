@@ -1,0 +1,8 @@
+extends: sunrgbd_transfer_nyuv2.yaml
+
+experiment:
+  name: sunrgbd_transfer_nyuv2_slot-jepa_vitb16_linear_depth
+  output_subdir: depth/sunrgbd_transfer_nyuv2/slot-jepa_vitb16
+
+model:
+  slot_alpha: 0.3

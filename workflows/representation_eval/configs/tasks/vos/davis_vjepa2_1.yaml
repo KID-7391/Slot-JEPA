@@ -1,0 +1,31 @@
+experiment:
+  name: davis_vjepa2_1_vitb16_vos
+  output_subdir: vos/davis/davis_vjepa2_1_vitb16_vos
+
+model:
+  load_mode: get_models
+  model_type: vjepa2
+  model_scale: vit_base
+  ckpt_ref: vjepa_2_1/vjepa2_1_vitb_dist_vitG_384.pt
+  patch_size: 16
+  state_dict_key: ema_encoder
+  prefix_filter: null
+  strip_prefix: ""
+  video_infer_frames: 2
+  patch_stride: 16
+  patch_padding: 0
+
+data:
+  dataset: davis
+  data_path_ref: davis
+  subset: val
+
+vos:
+  n_last_frames: 15
+  size_mask_neighborhood: 5
+  topk: 5
+  temperature: 0.2
+  crop: 0
+  align_corners: false
+  feature_chunk_size: 16
+  use_video_clip_features: false

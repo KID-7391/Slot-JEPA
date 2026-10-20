@@ -1,0 +1,176 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: plan_outputs/PushT/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: plan_outputs/PushT/${now:%Y%m%d_%H%M%S}
+    subdir: ${hydra.job.num}
+
+ckpt_base_path: ${hydra:runtime.cwd}/../../artifacts/checkpoints/downstream/planar
+model_name: PushT
+model_epoch: latest
+# Require the released native 32x32 slot/predictor grid.
+expected_model_input_size: 512
+expected_slot_spatial_size: 32
+expected_predictor_internal_spatial_size: 32
+expected_object_branch_spatial_sizes: [24, 16, 12]
+expected_mask_softmax_temperature: 1.0
+expected_mask_sharpen_gamma: 2.0
+expected_color_channel_weights_version: planar_important_objects_global_random_shapes_v2_block12_512px
+seed: 99
+# Focus subsequent CEM debugging on the four difficult global benchmark cases.
+n_evals: 50
+# eval_case_indices: [2, 12, 18, 25, 26, 45, 47, 31]
+goal_source: file
+goal_file_path: ${oc.env:PUSHT_TEST_TARGETS,${hydra:runtime.cwd}/../../artifacts/data/planar/PushT/targets/test.pkl}
+# The shared benchmark stores only states/actions. Render both endpoints through
+# the live PushT environment so baseline and Slot-AC receive identical RGB.
+rerender_file_targets: true
+# Keep success evaluation in the same geometry-centered coordinates used by
+# the visual planning objective and PushObj.
+use_geometric_center_eval: true
+goal_H: 5
+n_plot_samples: 10
+save_video: false
+# Master switch for videos, slot/PCA figures, and visualization artifacts.
+# Set false for throughput/performance evaluation.
+visualization: true
+wandb_logging: false
+debug_dset_init: false
+# Use twice the longest fixed test trajectory, rounded up to a multiple of 25
+# primitive environment steps. The current longest target is 25, so the
+# shared execution budget is 50 steps on every rank.
+train_trajectory_budget_multiplier: null
+test_trajectory_budget_multiplier: 2.0
+test_trajectory_budget_round_to: 25
+
+slot_pca:
+  enabled: true
+  num_samples: 10
+
+# Match the current retrieval-context training setup: uniformly sample five
+# real transitions from the 50 nearest bank entries.
+inference_retrieval:
+  num_context: 5
+  candidate_pool_size: 50
+
+planning_memory:
+  mode: relevance
+  num_context: ${inference_retrieval.num_context}
+  history_window: 20
+  seed: ${seed}
+
+# Nearest real transitions drawn from a shared, cached random pool for the
+# current test shape. Pool construction does not consume task steps. Set to 0
+# for zero-shot training-bank retrieval.
+test_context_num: 0
+test_context_seed: ${seed}
+test_context_pool_size: 1000
+# Keep encoded pools in a writable, launch-independent location. The cache key
+# still includes checkpoint identity, layout, and every generation hyperparameter.
+test_context_cache_dir: ${hydra:runtime.cwd}/slot-ac/context_cache
+test_context_action_std: 1.5
+test_context_action_temporal_correlation: 0.0
+test_context_min_agent_displacement: 0.0
+test_context_min_object_displacement: 0.0
+test_context_initial_agent_block_clearance: null
+test_context_require_contact: false
+test_context_contact_tolerance: 1.0
+test_context_generation_strategy: random
+
+objective:
+  _target_: planning.objectives.create_uot_objective_fn
+  alpha: 0.0
+  base: 2
+  mode: last
+  uot_loss_weight: 1.0
+  # Planning visual objective = UOT + this weight * mask L1.
+  mask_l1_loss_weight: 10.0
+  sinkhorn_iters: 5
+  entropy_reg: 0.01
+  unbalanced_ot_rho: 0.2
+  slot_change_weighting: true
+  slot_change_min_weight: 0.05
+  slot_change_max_weight: 5.0
+  uot_batch_size: 16
+  # Detect static slots by predicted change only; slot area is diagnostic and
+  # does not gate obstacle membership.
+  obstacle_transport:
+    enabled: false
+    # Obstacle transport is disabled for PushT. Recompute global slot scores
+    # after native-grid retraining before enabling it for diagnostics.
+    motion_score_mode: per_frame_difference_topk
+    motion_topk_patches: 10
+    fixed_slot_change_scores: null
+    moving_requires_both_scores: false
+    all_non_moving_static: false
+    moving_topk: 0
+    static_bottomk: 0
+    static_change_threshold: 0.05
+    moving_change_threshold: 0.15
+
+planner:
+  _target_: planning.mpc.MPCPlanner
+  max_iter: null
+  # The environment's geometric +/-512 px bound becomes roughly +/-25 after
+  # normalization and is far outside the data distribution. +/-4.5 retains
+  # all fixed-test expert actions (max 4.11) and about 99.9% of train actions.
+  normalized_action_clip: 4.5
+  # Match DINO-WM: jointly search five model steps in one CEM call and execute
+  # the resulting 25 primitive actions before observing/retrieving again.
+  n_taken_actions: 5
+  predictive_replan_within_block: false
+  sub_planner:
+    target: planning.cem.CEMPlanner
+    horizon: 5
+    # Search complete 25-step trajectories. Every relative primitive command
+    # is explicit; particle CEM preserves all 25 commands as one joint sample.
+    trajectory_prior:
+      enabled: true
+      particle_cem:
+        enabled: true
+        # Draw three independent random populations, retain the global top-30
+        # across all 900 candidates, then use the remaining seven CEM rounds
+        # for elite mutation and refinement.
+        random_init_steps: 1
+        # Keep some independent global exploration in every refinement round.
+        # One entry is used by each of the ten CEM generations.
+        # random_fraction_schedule: [1.0, 0.5, 0.25, 0.125, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0]
+        random_fraction_schedule: [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        min_speed: 0.0
+        # Ordinary primitive actions stay within the configured local/global range.
+        max_speed: 45.0
+        # Maximum signed heading change inside one five-action model step.
+        max_heading_change_degrees: 30.0
+        # The first action after each completed five-action model step may
+        # accelerate and, with 20% probability, choose any new direction.
+        boundary_min_speed: 0.0
+        boundary_max_speed: 80.0
+        boundary_full_direction_probability: 0.2
+        # In each independently sampled trajectory, every primitive action has
+        # this chance to end the global-motion prefix. All later actions become
+        # local, isotropic jitter so candidates can arrive early and remain nearby.
+        early_stop_probability: 0.01
+        post_stop_jitter_max_speed: 5.0
+        # AR(1) correlation applied to speed and heading-change mutations.
+        temporal_correlation: 0.8
+        # Adaptive mutation bounds: elite dispersion determines each round's
+        # noise, with initial_* as the ceiling and final_* as the floor.
+        initial_speed_std: 10.0
+        final_speed_std: 5.0
+        initial_heading_std_degrees: 10.0
+        final_heading_std_degrees: 5.0
+        initial_turn_std_degrees: 10.0
+        final_turn_std_degrees: 5.0
+    # Mutation samples are shared evenly by the 30 whole-trajectory elites;
+    # each elite is carried over exactly once before mutated children are added.
+    topk: 30
+    num_samples: 300
+    sample_chunk_size: 25
+    trajectory_batch_size: 1
+    # Three random generations followed by seven mixed refinement generations.
+    opt_steps: 10
+    eval_every: 10
+  name: mpc_cem

@@ -1,0 +1,33 @@
+robots:
+  - name: "UR5"
+    type: "UR"
+    obs_modalities: ["proprio"]
+    proprio_obs: ["joint_qpos"]
+    dof: 10
+    control_freq: 30 # from HACTS paper / RoboMind 2.0
+    action_normalize: False
+    action_type: "continuous"
+    #friction: [ 0.10925012, 0.08579129, 0.24110802, 0.10141244, 0.15005931, 0.1027853 ]
+    #armature: [ 0.24782622, 0.37901381, 0.2823702 , 0.28205856, 0.26644299, 0.11938067 ]
+    friction: [ 0.11384403, 0.09991353, 0.25778541, 0.10271196, 0.19960002, 0.12415259 ]
+    armature: [ 0.24911348, 0.4372361 , 0.31639045, 0.314077  , 0.27217656, 0.13080035 ]
+    controller_name: "IndividualJointPDController"
+    controller_config:
+        arm_0:
+            name: "IndividualJointPDController"
+            motor_type: "position"
+            control_freq: 30
+            use_delta_commands: False
+            use_impedances: True
+            use_gravity_compensation: False
+            use_cc_compensation: False
+            command_output_limits: null
+            command_input_limits: null
+            kp: 300
+            kd: 0
+            #max_effort: [ 150.0, 150.0, 150.0, 28.0, 28.0, 28.0 ]
+            #min_effort: [ -150.0, -150.0, -150.0, -28.0, -28.0, -28.0 ]
+        gripper_0:
+          name: "CustomGripperController"
+          mode: "binary"
+

@@ -1,0 +1,153 @@
+defaults:
+  - env: pusht
+  - _self_
+
+ckpt_base_path: ./slot-ac
+
+hydra:
+  run:
+    dir: ${ckpt_base_path}/outputs/PushT/${now:%Y%m%d_%H%M%S}
+  sweep:
+    dir: ${ckpt_base_path}/outputs/PushT
+    subdir: ${now:%Y%m%d_%H%M%S}_${hydra.job.num}
+
+training:
+  seed: 0
+  epochs: 200
+  # Full-resolution predictor features are memory intensive; use a moderate
+  # global training batch while UOT remains independently chunked.
+  batch_size: 32
+  # Synchronized iterations executed by every rank. Samples per epoch equal
+  # global batch_size * this value, independent of GPU count. Null uses all data.
+  max_iterations_per_epoch: 500
+  validation_batch_size: 128
+  num_workers: 16
+  save_every_x_epoch: 5
+  mixed_precision: bf16
+  predictor_lr: 5e-4
+  # Task-specific action/state/query modules adapt faster than REALM weights.
+  new_module_lr_multiplier: 1.0
+  weight_decay: 1e-5
+  # Cache per-frame masks; the single fixed slot bank remains in the model.
+  cache_slots: true
+  # Set true to build/validate caches without entering training.
+  cache_only: false
+  # Per GPU. Workers replay trajectory states through the lossless renderer in
+  # parallel while the current batch runs through the frozen extractor.
+  cache_batch_size: 32
+  cache_num_workers: 4
+  pca_visualize_every: 5
+  pca_visualization:
+    episode_idx: 0
+    num_episodes: 10
+    selection: random
+    start_raw_index: 0
+    num_steps: 12
+
+img_size: 512
+frameskip: 5
+concat_dim: 1
+normalize_action: true
+action_emb_dim: 10
+num_action_repeat: 1
+proprio_emb_dim: 10
+num_proprio_repeat: 1
+
+# One adjacent model-step pair forms the query source/target. Five context
+# transitions are retrieved from the training bank inside the model forward.
+num_hist: 1
+num_pred: 1
+has_predictor: true
+has_decoder: false
+
+model:
+  _target_: models.slot_world_model.SlotMaskWorldModel
+  num_hist: ${num_hist}
+  num_pred: ${num_pred}
+  input_size: ${img_size}
+  patch_size: 16
+  # Native encoder mask grid: 512 / 16 = 32.
+  slot_spatial_size: 32
+  # Run the predictor trunk on the native 32x32 slot grid.
+  predictor_internal_spatial_size: 32
+  # Use the same multi-scale object pyramid in every planar environment.
+  predictor_object_branch_scales:
+    - {spatial_size: 24, dim: 48, depth: 4, num_heads: 3}
+    - {spatial_size: 16, dim: 96, depth: 4, num_heads: 3}
+    - {spatial_size: 12, dim: 196, depth: 4, num_heads: 4}
+  num_objects: 8
+  visual_normalization: imagenet
+  encoder_contrast_scale: 2.0
+  encoder_flip_tta: true
+  mask_softmax_temperature: 1.0
+  mask_sharpen_gamma: 2.0
+  # One frozen 768-D vector, calibrated at 512px and shared by all six tasks.
+  color_channel_weights_path: ${hydra:runtime.cwd}/../../artifacts/color_channel_weights/planar_block12_important_objects_v2.pt
+  color_channel_weights_version: planar_important_objects_global_random_shapes_v2_block12_512px
+  color_channel_preserve_token_norm: true
+  fixed_reference_seed: 0
+  fixed_reference_num_frames: 32
+  fixed_reference_version: pusht_uniform_area_density_v1
+  # The rebuilt dataset has new block trajectories while retaining the same
+  # public path and sequence lengths, so explicitly invalidate old caches.
+  slot_cache_version: pusht_uniform_area_density_replay_gamma2_color_v2
+  predictor_state_dim: 32
+  predictor_use_extrinsics: true
+  predictor_extrinsics_dim: 32
+  predictor_use_warp_concat: true
+  window_size: [1, 1]
+  slots_per_window: 1
+  train_encoder: false
+  train_predictor: true
+  train_decoder: false
+  realm_ckpt_path: ${oc.env:SLOT_JEPA_PRETRAIN_CKPT,${hydra:runtime.cwd}/../../artifacts/checkpoints/pretrain/slot_jepa_pretrained.pt}
+  realm_config_path: ${hydra:runtime.cwd}/../../artifacts/checkpoints/pretrain/slot_jepa_pretrained.yaml
+  predictor_transport_loss_weight: 1.0
+  # Train masks with logit-space KL; probability-space L1 remains inference-only.
+  predictor_mask_l1_loss_weight: 0.0
+  predictor_mask_kl_loss_weight: 10.0
+  # KL alignment of signed x/y Sobel responses over the slot axis.
+  predictor_mask_sobel_loss_weight: 10.0
+  predictor_recon_loss_weight: 1.0
+  # Bound memory for dense 32x32 transport; chunking does not change the loss.
+  uot_batch_size: 16
+  sinkhorn_iters: 5
+  sinkhorn_entropy_reg: 0.01
+  unbalanced_ot_rho: 0.2
+  mask_transport_area_normalize: true
+  mask_transport_area_normalize_eps: 0.001
+  slot_change_weighting: true
+  slot_change_min_weight: 0.05
+  slot_change_max_weight: 5.0
+  predictor_proprio_loss_weight: 1.0
+  # Decode the controlled [x, y, vx, vy] projection from its input embedding.
+  proprio_reconstruction_loss_weight: 1.0
+  # Only the controlled pusher state is available to the predictor. Block
+  # position/angle must be inferred from visual slots. The predicted proprio
+  # embedding is supervised against this same [x, y, vx, vy] projection.
+  predictor_proprio_indices: [0, 1, 5, 6]
+  # Contexts are nearest real transitions retrieved from the training cache.
+  retrieval_num_context: 5
+  retrieval_candidate_pool_size: 50
+  training_retrieval_context: true
+  validation_online_context: true
+  retrieval_bank_size: 32768
+  retrieval_distance_chunk_size: 32768
+  retrieval_visual_distance_weight: 1.0
+  debug_timing: ${debug}
+
+debug: false
+
+# Re-render states directly on the native 512x512 simulator canvas. Each sample contains
+# one adjacent model-step query pair; its contexts come from the retrieval bank.
+env:
+  dataset:
+    data_path: ${hydra:runtime.cwd}/../../artifacts/data/planar/PushT
+    non_overlapping_causal_windows: true
+    max_causal_windows_per_trajectory: null
+    validation_n_rollout: 1000
+    validation_non_overlapping_causal_windows: true
+    # Replay states through the native renderer for slot cache and training
+    # visualizations, eliminating the planning-time MP4 codec domain gap.
+    render_from_state: true
+    render_size: ${img_size}
