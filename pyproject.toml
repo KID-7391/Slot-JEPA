@@ -13,6 +13,10 @@ dependencies = [
   "torch==2.2.2",
 ]
 
+[project.urls]
+Paper = "https://arxiv.org/abs/2610.28074"
+Repository = "https://github.com/KID-7391/Slot-JEPA"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["slot_jepa*"]

@@ -1,8 +1,8 @@
 # Slot-JEPA
 
-This is the official implementation of **Slot-JEPA: Object-Structured Prediction Interfaces for Latent World Models**. The arXiv link will be added after the preprint is available.
+This is the official implementation of **Slot-JEPA: Object-Structured Prediction Interfaces for Latent World Models** ([arXiv:2610.28074](https://arxiv.org/abs/2610.28074)).
 
-[![Paper](https://img.shields.io/badge/arXiv-coming_soon-b31b1b.svg)](#-citation) [![Python](https://img.shields.io/badge/Python-3.9.15-3776AB.svg)](https://www.python.org/) [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2%2Bcu118-EE4C2C.svg)](https://pytorch.org/)
+[![Paper](https://img.shields.io/badge/arXiv-2610.28074-b31b1b.svg)](https://arxiv.org/abs/2610.28074) [![Python](https://img.shields.io/badge/Python-3.9.15-3776AB.svg)](https://www.python.org/) [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.2%2Bcu118-EE4C2C.svg)](https://pytorch.org/)
 
 **Slot-JEPA: Object-Structured Prediction Interfaces for Latent World Models**
 
@@ -266,7 +266,17 @@ python -m unittest tests.test_layout
 
 ## 🖋️ Citation
 
-The BibTeX entry and arXiv URL will be added after the preprint is available.
+If you find this work useful, please cite:
+
+```bibtex
+@article{wen2026slotjepa,
+  title   = {Slot-JEPA: Object-Structured Prediction Interfaces for Latent World Models},
+  author  = {Wen, Peisong and Xu, Qianqian and Lei, Minye and Dai, Siran and Liu, Yang and Huang, Qingming},
+  journal = {arXiv preprint arXiv:2610.28074},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2610.28074}
+}
+```
 
 ## 🌟 Acknowledgements
 
