@@ -1,6 +1,8 @@
 # Planar Planning Data
 
-This upload-ready package contains the released state/action datasets and fixed test targets for the six planar tasks. These task splits were generated and curated for Slot-JEPA; they are not downloaded from the DINO-WM data release.
+[`planar_data.zip`](https://drive.google.com/file/d/1g6vhaJDmLQlEj37WAgDQ2wzlGtxmkKM-/view?usp=sharing) contains the released state/action datasets and fixed test targets for the six planar tasks. Extract it from the Slot-JEPA release root so that its contents are restored under `artifacts/data/planar/`. These task splits were generated and curated for Slot-JEPA; they are not downloaded from the DINO-WM data release.
+
+Archive SHA256: `54df3d3020443a5065cd1cf8c211e872a64e5c1ecf239b2e4e89ca0369c398dc`
 
 | Directory | Task | Contents |
 | --- | --- | --- |
@@ -38,6 +40,6 @@ PushT uses the same uniform-area-density rigid-body construction as PushObj: mas
 
 `PushT/normalization_stats.pt` is computed from valid frames of the rebuilt training split and is shared by training, validation, and planning targets. Relative pusher commands are preserved; absolute commands are re-derived from the rebuilt pusher states.
 
-The workflow configs resolve this package directly from `artifacts/data/planar/`. If the data is hosted separately, extract the archive back to this directory or override the relevant dataset environment variable.
+The workflow configs resolve this package directly from `artifacts/data/planar/`. If the data is hosted elsewhere, restore it to this directory or override the relevant dataset environment variable.
 
 After downloading, verify the package from this directory with `sha256sum -c SHA256SUMS`.

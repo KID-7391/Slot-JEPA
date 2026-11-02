@@ -176,14 +176,16 @@ See the [REALM-JEPA workflow guide](workflows/robot/README.md) for DROID fine-tu
 
 ## 📦 Artifacts
 
-Large artifacts are distributed separately and are intentionally ignored by Git. Download the five archives and restore their contents to the paths shown below, preserving the archive directory structure relative to the release root.
+Large artifacts are distributed separately and are intentionally ignored by Git. Download the seven archives and restore their contents to the paths shown below, preserving the archive directory structure relative to the release root.
 
 | Archive | Contents restored under | Download |
 | --- | --- | --- |
 | `color_channel_weights.zip` | `artifacts/color_channel_weights/` | [Google Drive](https://drive.google.com/file/d/1P2y0f5UCRhyy8Ij-rkpqb_83lTA6ABRa/view?usp=sharing) |
-| `planar.zip` | `artifacts/checkpoints/downstream/planar/` and `artifacts/data/planar/` | [Google Drive](https://drive.google.com/file/d/1jKpAe5jOdFea_JEzfDRvEEamJhWfd6vm/view?usp=sharing) |
+| `planar.zip` | `artifacts/checkpoints/downstream/planar/` | [Google Drive](https://drive.google.com/file/d/1jKpAe5jOdFea_JEzfDRvEEamJhWfd6vm/view?usp=sharing) |
+| `planar_data.zip` | `artifacts/data/planar/` | [Google Drive](https://drive.google.com/file/d/1g6vhaJDmLQlEj37WAgDQ2wzlGtxmkKM-/view?usp=sharing) |
 | `pretrain.zip` | `artifacts/checkpoints/pretrain/` | [Google Drive](https://drive.google.com/file/d/1ICmt3lTu0EfuCk7K1Ymt77B-dMWRkJet/view?usp=sharing) |
-| `robot.zip` | `artifacts/checkpoints/downstream/robot/` and `artifacts/data/robot/` | [Google Drive](https://drive.google.com/file/d/1nSatahGz_L6E_mHlGrk7QsG0nDHUsHh6/view?usp=sharing) |
+| `robot.zip` | `artifacts/checkpoints/downstream/robot/` | [Google Drive](https://drive.google.com/file/d/1nSatahGz_L6E_mHlGrk7QsG0nDHUsHh6/view?usp=sharing) |
+| `robot_data.zip` | `artifacts/data/robot/` | [Google Drive](https://drive.google.com/file/d/1x6LCzMLCUGpfqL9bC_i-G-Ms88rSZKUR/view?usp=sharing) |
 | `visual_understanding.zip` | `artifacts/checkpoints/downstream/visual_understanding/` | [Google Drive](https://drive.google.com/file/d/1xgxowQjRBFQpiOJyzmlRzZ-rLJEc72Ki/view?usp=sharing) |
 
 After downloading the required archives, the artifact tree should look like this. Entries marked `[Git]` remain in the repository; entries marked `[download]` come from the archives and are ignored by Git.
@@ -218,13 +220,13 @@ artifacts/
     │   ├── README.md                                  [Git]
     │   ├── SHA256SUMS                                [Git]
     │   └── {TwoRoom,Maze,PushT,TwoRoomR,MazeR,PushObj}/
-    │       └── ...                                    [download: planar.zip]
+    │       └── ...                                    [download: planar_data.zip]
     └── robot/
         ├── README.md                                  [Git]
         └── successful_case/<case>/
-            ├── manifest.json                         [download: robot.zip]
-            ├── goal_targets.pt                       [download: robot.zip]
-            └── {sg1,sg2,end}_{base,second,wrist}.png [download: robot.zip]
+            ├── manifest.json                         [download: robot_data.zip]
+            ├── goal_targets.pt                       [download: robot_data.zip]
+            └── {sg1,sg2,end}_{base,second,wrist}.png [download: robot_data.zip]
 ```
 
 Download only the packages required for the workflow you intend to run:
@@ -234,11 +236,11 @@ Download only the packages required for the workflow you intend to run:
 | Semantic segmentation: COCOStuff-27, ADE20K, VOC | `robot.zip` | Uses the shared DROID-fine-tuned Slot-JEPA encoder; the linear probe is trained during evaluation. |
 | Monocular depth: NYUv2, KITTI, SUNRGBD transfer | `robot.zip`, `visual_understanding.zip` | The robot archive provides the frozen encoder; the visual-understanding archive provides the released depth heads. If retraining a depth head, only `robot.zip` is required. |
 | Video object segmentation: DAVIS-2017 | `robot.zip` | Label propagation is non-parametric, so no task-specific head is required. |
-| Planar training or planning: TwoRoom, Maze, PushT, TwoRoomR, MazeR, PushObj | `pretrain.zip`, `planar.zip`, `color_channel_weights.zip` | Provides the frozen Slot-JEPA model, task datasets/targets, released predictors, and channel weights. |
+| Planar training or planning: TwoRoom, Maze, PushT, TwoRoomR, MazeR, PushObj | `pretrain.zip`, `planar.zip`, `planar_data.zip`, `color_channel_weights.zip` | Provides the frozen Slot-JEPA model, task datasets/targets, released predictors, and channel weights. |
 | DROID fine-tuning | `pretrain.zip` | Also requires the external DROID dataset. Download `robot.zip` only when using or evaluating the released fine-tuned checkpoint. |
-| REALM-JEPA robot planning | `robot.zip` | Provides both the fine-tuned model and all 108 visual-goal target packages. REALM/OmniGibson assets are installed separately. |
+| REALM-JEPA robot planning | `robot.zip`, `robot_data.zip` | Provides the fine-tuned model and all 108 visual-goal target packages. REALM/OmniGibson assets are installed separately. |
 
-Dataset downloads for visual-understanding evaluation, Kinetics-400 pretraining data, the DROID training set, and REALM/OmniGibson simulator assets are not included in these five archives.
+Dataset downloads for visual-understanding evaluation, Kinetics-400 pretraining data, the DROID training set, and REALM/OmniGibson simulator assets are not included in these seven archives.
 
 The repository retains the artifact `README.md` files and available `SHA256SUMS` manifests. After extraction, verify packages from the directory containing the corresponding checksum file, for example:
 
